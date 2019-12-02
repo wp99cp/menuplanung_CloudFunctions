@@ -1,35 +1,38 @@
 import * as functions from 'firebase-functions';
 
-/**
- * 
- * Cloud functions for the eMeal application of the cevi zueri 11.
- * 
- * 
- * 
- */
+import { ResponseData } from "./interface-responseData";
+import { createCampExportData, createShoppingListData, createMealsInfoData } from './exportData';
 
 
 /**
- * ResponseData type for httpsCallable functions
  * 
- */
-interface ResponseData {
-    data: any
-
-}
-
-/**
+ * Creates a new httpsCallable function with the basic settings
+ * 
+ * Used region: 'europe-west1'
  * 
  * @param createResponseFunction 
  * 
  */
-const createHTTPSTriggerFunctions = (createResponseFunction: (requestData: functions.https.Request) => ResponseData) => {
+const createHTTPSfunc = (createResponseFunction: (requestData: functions.https.Request) => Promise<ResponseData>) => {
 
-    return functions.https
-        .onRequest((requestData, response) => {
+    return functions
 
+        // sets the region on which the cloud functions get exicuded.
+        // this region must be also set in the call of the function
+        .region('europe-west1')
+
+        // creat a httpsCallable function
+        .https.onRequest((requestData, response) => {
+
+            // set the correct access header for CORS loading data
             setAccesControlHeaders(response);
-            response.send(createResponseFunction(requestData));
+
+            // create the response and return it to the client
+            createResponseFunction(requestData)
+
+                //  send the data after the promise is resolved
+                .then(responseData => response.send(responseData))
+                .catch(err => console.error);
 
         });
 
@@ -49,73 +52,35 @@ const setAccesControlHeaders = (response: functions.Response) => {
 
 }
 
-/////////////////////////////
-/////////////////////////////
-/////////////////////////////
+////////////////////////////////////
+////////////////////////////////////
+// export the all cloud functions //
+////////////////////////////////////
+////////////////////////////////////
 
-exports.getMealsInfoExport = createHTTPSTriggerFunctions(() => {
+/**
+ * 
+ */
+exports.getMealsInfoExport = createHTTPSfunc(() => createMealsInfoData());
 
-    return {
-        data: {
-            name: 'Zmittag',
-            meal: 'Hörndli und Ghacktes',
-            date: 'Mittwoch, 30. November 2019',
-            recipes: [
-                {
-                    name: 'Hörndli und Ghacktes'
-                }
-            ]
-        }
-    };
-
-})
-
-
-exports.getCampInfoExport = createHTTPSTriggerFunctions(() => {
-
-    return {
-        data: {
-            data: {
-                name: 'Chlauslager 2019'
-            }
-        }
-    };
+/**
+ * 
+ */
+exports.newUserCreated = functions.auth.user().onCreate((user) => {
+    console.log('new User created');
 
 });
 
-exports.getShoppingList = createHTTPSTriggerFunctions(() => {
 
-    return {
-        data: [
-            {
-                name: 'Fleisch',
-                ingredients: [
-                    {
-                        food: 'Hackfleisch',
-                        unit: 'kg',
-                        measure: '2'
-                    }, {
-                        food: 'Brätchügeli',
-                        unit: 'kg',
-                        measure: '1'
-                    }, {
-                        food: 'Brätchügeli',
-                        unit: 'kg',
-                        measure: '1'
-                    }
-                ]
-            },
-            {
-                name: 'Gemüse und Früchte',
-                ingredients: [
-                    {
-                        food: 'Apfel',
-                        unit: 'kg',
-                        measure: '2'
-                    }
-                ]
-            }
-        ]
-    }
+/** 
+ * 
+ * @response the camp info extracted from the database
+ * 
+ */
+exports.getCampInfoExport = createHTTPSfunc(request => createCampExportData(request));
 
-});
+
+/**
+ * 
+ */
+exports.getShoppingList = createHTTPSfunc(() => createShoppingListData());
