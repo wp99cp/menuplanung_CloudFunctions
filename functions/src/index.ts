@@ -1,5 +1,4 @@
 import * as functions from 'firebase-functions';
-
 import { ResponseData } from "./interface-responseData";
 import { createCampExportData, createShoppingListData, createMealsInfoData } from './exportData';
 
@@ -21,6 +20,12 @@ const createHTTPSfunc = (createResponseFunction: (requestData: functions.https.R
         // this region must be also set in the call of the function
         .region('europe-west1')
 
+        // only for testing
+        .runWith({
+            timeoutSeconds: 30,
+            memory: '256MB'
+        })
+
         // creat a httpsCallable function
         .https.onRequest((requestData, response) => {
 
@@ -31,7 +36,15 @@ const createHTTPSfunc = (createResponseFunction: (requestData: functions.https.R
             createResponseFunction(requestData)
 
                 //  send the data after the promise is resolved
-                .then(responseData => response.send(responseData))
+                .then(responseData => {
+
+                    // add serverTimestamp
+                    responseData.data.serverTimestamp = Date.now();
+
+                    // semd response
+                    response.send(responseData);
+
+                })
                 .catch(err => console.error);
 
         });
@@ -58,29 +71,13 @@ const setAccesControlHeaders = (response: functions.Response) => {
 ////////////////////////////////////
 ////////////////////////////////////
 
-/**
- * 
- */
-exports.getMealsInfoExport = createHTTPSfunc(() => createMealsInfoData());
+exports.getMealsInfoExport = createHTTPSfunc(createMealsInfoData);
 
-/**
- * 
- */
 exports.newUserCreated = functions.auth.user().onCreate((user) => {
     console.log('new User created');
 
 });
 
+exports.getCampInfoExport = createHTTPSfunc(createCampExportData);
 
-/** 
- * 
- * @response the camp info extracted from the database
- * 
- */
-exports.getCampInfoExport = createHTTPSfunc(request => createCampExportData(request));
-
-
-/**
- * 
- */
-exports.getShoppingList = createHTTPSfunc(() => createShoppingListData());
+exports.getShoppingList = createHTTPSfunc(createShoppingListData);
