@@ -1,8 +1,8 @@
 import { ResponseData } from "./interface-responseData";
 import { ShoppingList } from "./interface-ShoppingList";
 import { Ingredient } from "./interface-ingredient";
+import { categoryList } from "./categoryList";
 
-import * as functions from 'firebase-functions';
 import * as  admin from 'firebase-admin';
 
 // connect to firebase firestore database
@@ -14,10 +14,10 @@ const db = admin.firestore();
  * 
  * @param requestData 
  */
-export async function createCampExportData(requestData: functions.https.Request): Promise<ResponseData> {
+export async function createCampExportData(requestData: any): Promise<ResponseData> {
 
     // TODO: change to dynamic camp id
-    const campId = requestData.body.campId;
+    const campId = requestData.campId;
 
     // load data form the database
     const snapshot = await db.doc('camps/' + campId).get();
@@ -34,14 +34,17 @@ export async function createCampExportData(requestData: functions.https.Request)
  * creates a shoppingList for the requested campId
  * 
  */
-export async function createShoppingListData(requestData: functions.https.Request): Promise<ResponseData> {
+export async function createShoppingListData(requestData: any): Promise<ResponseData> {
 
-    const campId = requestData.body.campId;
+    const campId: string = requestData.campId;
 
-    console.log(requestData)
+    if (campId === undefined) {
+        throw new Error('undefined campId');
+
+    }
 
     // shoppingList object which get returned by the function
-    const shoppingList: ShoppingList = new ShoppingList();
+    const shoppingList: ShoppingList = new ShoppingList(categoryList);
 
     // search for all specificRecipes with the given campId
     const refs = await db.collectionGroup('specificRecipes').where('campId', '==', campId).get();
@@ -73,12 +76,12 @@ export async function createShoppingListData(requestData: functions.https.Reques
 
 
         await Promise.all(ingredients.map(async (ingredient: Ingredient) => {
-            shoppingList.addIngredients(ingredient, participants);
+            shoppingList.addIngredient(ingredient, participants);
         }));
 
     }));
 
-    return { data: shoppingList.list };
+    return { data: shoppingList.getList() };
 
 }
 

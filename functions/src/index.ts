@@ -2,17 +2,16 @@ import * as functions from 'firebase-functions';
 import { ResponseData } from "./interface-responseData";
 import { createCampExportData, createShoppingListData, createMealsInfoData } from './exportData';
 
-
 /**
  * 
- * Creates a new httpsCallable function with the basic settings
+ * Creates a new https.onCall function with the basic settings
  * 
  * Used region: 'europe-west1'
  * 
  * @param createResponseFunction 
  * 
  */
-const createHTTPSfunc = (createResponseFunction: (requestData: functions.https.Request) => Promise<ResponseData>) => {
+const createHTTPSfunc = (createResponseFunction: (requestData: any) => Promise<ResponseData>) => {
 
     return functions
 
@@ -22,48 +21,20 @@ const createHTTPSfunc = (createResponseFunction: (requestData: functions.https.R
 
         // only for testing
         .runWith({
-            timeoutSeconds: 30,
-            memory: '256MB'
+            timeoutSeconds: 15,
+            memory: '128MB'
         })
 
         // creat a httpsCallable function
-        .https.onRequest((requestData, response) => {
-
-            // set the correct access header for CORS loading data
-            setAccesControlHeaders(response);
+        .https.onCall((requestData, context) => {
 
             // create the response and return it to the client
-            createResponseFunction(requestData)
-
-                //  send the data after the promise is resolved
-                .then(responseData => {
-
-                    // add serverTimestamp
-                    responseData.data.serverTimestamp = Date.now();
-
-                    // semd response
-                    response.send(responseData);
-
-                })
-                .catch(err => console.error);
+            return createResponseFunction(requestData);
 
         });
 
 }
 
-/**
- * 
- * @param response 
- */
-const setAccesControlHeaders = (response: functions.Response) => {
-
-    response.setHeader("Access-Control-Allow-Origin", "*");
-    response.setHeader("Access-Control-Allow-Credentials", "true");
-    response.setHeader("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
-    response.setHeader("Access-Control-Allow-Headers",
-        "authorization, Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers");
-
-}
 
 ////////////////////////////////////
 ////////////////////////////////////
