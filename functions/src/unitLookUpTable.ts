@@ -1,3 +1,4 @@
+import * as  admin from 'firebase-admin';
 import { db } from "./index";
 
 
@@ -60,7 +61,7 @@ export function toUnitMeasure(measure: number, unit: string): { measure: number,
 
     // write unknown unit to document in 'sharedData/unknownUnits'
     db.doc('sharedData/unknownUnits')
-      .set({ unknownUnits: [unit] }, { merge: true })
+      .update({ units: admin.firestore.FieldValue.arrayUnion(unit) })
       .catch(e => console.error(e));
 
     throw new UnitConvertionError('Unknown unit: ' + unit);
