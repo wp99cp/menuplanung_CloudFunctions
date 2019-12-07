@@ -1,14 +1,11 @@
 import { ResponseData } from "./interface-responseData";
-import { ShoppingList } from "./interface-ShoppingList";
+import { ShoppingList, UnitMismatchingError } from "./interface-ShoppingList";
 import { Ingredient } from "./interface-ingredient";
 import { categoryList } from "./categoryList";
+import { db } from "./index";
+import { UnitConvertionError } from "./unitLookUpTable";
 
-import * as  admin from 'firebase-admin';
-
-// connect to firebase firestore database
-admin.initializeApp();
-const db = admin.firestore();
-
+export class InvalidDocumentPath extends Error { }
 
 /**
  * 
@@ -36,54 +33,82 @@ export async function createCampExportData(requestData: any): Promise<ResponseDa
  */
 export async function createShoppingListData(requestData: any): Promise<ResponseData> {
 
-    const campId: string = requestData.campId;
-
-    if (campId === undefined) {
-        throw new Error('undefined campId');
-
-    }
-
     // shoppingList object which get returned by the function
     const shoppingList: ShoppingList = new ShoppingList(categoryList);
 
-    // search for all specificRecipes with the given campId
-    const refs = await db.collectionGroup('specificRecipes').where('campId', '==', campId).get();
+    // log errors form the function
+    const err: string[] = [];
 
-    // for each specificRecipe
-    await Promise.all(refs.docs.map(async (specificRecipeDoc) => {
+    try {
 
-        let recipeRef: string = '';
+        const campId: string = requestData.campId;
 
-        if (specificRecipeDoc.ref.parent.parent === null) {
-            throw new Error('undefined path');
-
-        }
-
-        recipeRef = specificRecipeDoc.ref.parent.parent.path;
-
-        // get the participants for this recipes
-        const participants: number = specificRecipeDoc.data().participants;
-
-        // load the ingredient data for the ricipe
-        const data = (await db.doc(recipeRef).get()).data();
-
-        if (data === undefined) {
-            throw new Error('undefined path');
-
-        }
-
-        const ingredients = data.ingredients;
+        if (campId === undefined)
+            throw new InvalidDocumentPath('undefined campId');
 
 
-        await Promise.all(ingredients.map(async (ingredient: Ingredient) => {
-            shoppingList.addIngredient(ingredient, participants);
-        }));
 
-    }));
+        // search for all specificRecipes with the given campId
+        const refs = await db.collectionGroup('specificRecipes').where('campId', '==', campId).get();
 
-    return { data: shoppingList.getList() };
+        // for each specificRecipe
+        await Promise.all(refs.docs.map(async (specRecip) => await addRecipeToShoppingList(specRecip, shoppingList, err)));
+
+    } catch (e) {
+
+        if (e instanceof InvalidDocumentPath)
+            err.push('Can\'t load data: ' + e);
+
+    }
+
+    return { data: shoppingList.getList(), error: err };
 
 }
+
+
+
+async function addRecipeToShoppingList(specificRecipeDoc: FirebaseFirestore.QueryDocumentSnapshot, shoppingList: ShoppingList, err: string[]) {
+
+    let recipeRef: string = '';
+
+    if (specificRecipeDoc.ref.parent.parent === null) {
+        throw new InvalidDocumentPath('undefined path');
+    }
+
+    recipeRef = specificRecipeDoc.ref.parent.parent.path;
+
+    // get the participants for this recipes
+    const participants: number = specificRecipeDoc.data().participants;
+
+    // load the ingredient data for the ricipe
+    const data = (await db.doc(recipeRef).get()).data();
+
+    if (data === undefined) {
+        throw new InvalidDocumentPath('undefined path');
+    }
+
+    const ingredients = data.ingredients;
+    await Promise.all(ingredients.map(async (ingredient: Ingredient) => addToShoppingList(shoppingList, ingredient, participants, err)));
+
+}
+
+function addToShoppingList(shoppingList: ShoppingList, ingredient: Ingredient, participants: number, error: string[]) {
+
+    try {
+        shoppingList.addIngredient(ingredient, participants);
+
+    }
+    catch (e) {
+
+        if (e instanceof UnitConvertionError)
+            error.push('Can\'t add ' + ingredient.food + ' to shopping list! \n' + e.message);
+
+        if (e instanceof UnitMismatchingError)
+            error.push('Can\'t add ' + ingredient.food + ' to shopping list! \n' + e.message);
+
+    }
+}
+
 
 
 

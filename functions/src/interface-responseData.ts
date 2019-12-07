@@ -3,6 +3,7 @@
  * 
  */
 export interface ResponseData {
-    data: any
+    data: any;
+    error?: string[];
 
 }

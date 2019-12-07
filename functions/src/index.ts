@@ -2,6 +2,12 @@ import * as functions from 'firebase-functions';
 import { ResponseData } from "./interface-responseData";
 import { createCampExportData, createShoppingListData, createMealsInfoData } from './exportData';
 
+import * as  admin from 'firebase-admin';
+
+// connect to firebase firestore database
+admin.initializeApp();
+export const db = admin.firestore();
+
 /**
  * 
  * Creates a new https.onCall function with the basic settings

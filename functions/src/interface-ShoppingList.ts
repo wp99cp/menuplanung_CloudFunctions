@@ -1,4 +1,4 @@
-import { toUnitMeasure } from "./unitLookUpTable";
+import { toUnitMeasure as toBaseUnitMeasure } from "./unitLookUpTable";
 import { Ingredient } from "./interface-ingredient";
 
 
@@ -15,7 +15,7 @@ interface ShoppingCard {
 
 }
 
-
+export class UnitMismatchingError extends Error { }
 
 /**
  * 
@@ -63,7 +63,8 @@ export class ShoppingList {
 
         const foodName = ing.food.trim().replace(/[\r\n]+/gm, '')
 
-        const inBaseUnit = toUnitMeasure(ing.measure, ing.unit);
+        const inBaseUnit = toBaseUnitMeasure(ing.measure, ing.unit);
+
         let measure = 0;
         let category = '';
 
@@ -72,9 +73,9 @@ export class ShoppingList {
             measure = this.list[foodName].measure;
             category = this.list[foodName].category;
 
-            if (this.list[foodName].unit !== inBaseUnit.unit) {
-                throw new Error('Can\'t add ' + inBaseUnit.unit + ' to ' + this.list[ing.unit]);
-            }
+            if (this.list[foodName].unit !== inBaseUnit.unit)
+                throw new UnitMismatchingError('Can\'t add ' + inBaseUnit.unit + ' to ' + this.list[ing.unit]);
+
 
         }
         else {
