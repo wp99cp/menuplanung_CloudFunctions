@@ -7,24 +7,22 @@ export const categoryList = {
     ],
 
     'Fleisch': [
-        'Hackfleisch'
+        'Hackfleisch',
+        'Schweinshalsbraten'
     ],
 
     'Konserven': [
         'Dosen Ananas',
-        'Dosen pfirsich'
-
-    ],
-
-    'Früchte': [
-        'Mango'
+        'Dosen pfirsich',
+        'Tomatenpüree', 'Pelati'
     ],
 
     'Grundnahrungsmittel': [
-        'Reis',
+        'Reis', 'Basmatireis', 'Risotto',
         'Zucker',
-        'Halbweissmehl',
-        'Mehl'
+        'Mehl', 'Halbweissmehl', 'Dinkelmehl',
+        'Hörndli', 'Nudeln',
+        'Rollgersten'
     ],
 
     'Milchprodukte und Eier': [
@@ -38,6 +36,18 @@ export const categoryList = {
         'Quark'
     ],
 
+    'Gewürze': [
+        'Curry',
+        'Pfeffer',
+        'Salz',
+        'Loorbeerbläter',
+        'Chilipulver',
+        'Garam Masala',
+        'Kreuzkümmelsamen',
+        'Kurkuma',
+        'Fenchelsamen'
+    ],
+
     'Früchte und Gemüse': [
         'Äpfel',
         'Apfel',
@@ -49,7 +59,22 @@ export const categoryList = {
         'Karotten',
         'Blumenkohl',
         'Kartoffeln',
-        'Mango'
+        'Mango',
+        'Knoblauch',
+        'Knoblauchzehen',
+        'Mango',
+        'Frucht',
+        'Früchte',
+        'Saisongemüse'
+    ],
+
+    'Süsses und Snacks': [
+        'Schoggi',
+        'Schockolade',
+    ],
+
+    'muss ggf. nicht gekauft werden': [
+        'Wasser'
     ]
 
 }
