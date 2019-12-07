@@ -101,10 +101,10 @@ function addToShoppingList(shoppingList: ShoppingList, ingredient: Ingredient, p
     catch (e) {
 
         if (e instanceof UnitConvertionError)
-            error.push('Can\'t add ' + ingredient.food + ' to shopping list! \n' + e.message);
+            error.push('Can\'t add \'' + ingredient.food + '\' to shopping list! \n' + e.message);
 
         if (e instanceof UnitMismatchingError)
-            error.push('Can\'t add ' + ingredient.food + ' to shopping list! \n' + e.message);
+            error.push('Can\'t add \'' + ingredient.food + '\' to shopping list! \n' + e.message);
 
     }
 }

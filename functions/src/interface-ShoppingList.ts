@@ -1,5 +1,7 @@
 import { toUnitMeasure as toBaseUnitMeasure } from "./unitLookUpTable";
 import { Ingredient } from "./interface-ingredient";
+import { db } from "./index";
+import admin = require("firebase-admin");
 
 
 /**
@@ -28,8 +30,6 @@ export class ShoppingList {
     // known category for food
     private categoryData: { [food: string]: string };
 
-    // list of uncategorised items in the shoppingList
-    private uncategorised: string[] = [];
 
 
     /**
@@ -100,7 +100,10 @@ export class ShoppingList {
             return this.categoryData[food];
         }
 
-        this.uncategorised.push(food);
+        // write unknown unit to document in 'sharedData/foodCategories'
+        db.doc('sharedData/foodCategories')
+            .update({ uncategorised: admin.firestore.FieldValue.arrayUnion(food) })
+            .catch(e => console.error(e));
 
         return 'Nicht Kategorisiert';
 
