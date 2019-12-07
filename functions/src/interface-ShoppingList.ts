@@ -101,7 +101,7 @@ export class ShoppingList {
 
         this.uncategorised.push(food);
 
-        return 'Diverses';
+        return 'Nicht Kategorisiert';
 
     }
 
