@@ -36,8 +36,14 @@ const unitLookUp: UnitLookUpTable = {
   Scheib: { factor: 1, baseUnit: 'Scheiben' },
   EL: { factor: 1, baseUnit: 'EL' },
   el: { factor: 1, baseUnit: 'EL' },
-  TL: { factor: 13, baseUnit: 'EL' },
-  tl: { factor: 13, baseUnit: 'EL' }
+  TL: { factor: 0.3, baseUnit: 'EL' },
+  tl: { factor: 0.3, baseUnit: 'EL' },
+  Pack: { factor: 1, baseUnit: 'Packung' },
+  Packung: { factor: 1, baseUnit: 'Packung' },
+  Reih: { factor: 1, baseUnit: 'Reihe' },
+  Reihe: { factor: 1, baseUnit: 'Reihe' },
+  wenig: { factor: 0.00025, baseUnit: 'kg' },
+  lk: { factor: 0.3, baseUnit: 'EL' },
 
 };
 
