@@ -14,7 +14,7 @@ export const categoryList = {
     'Konserven': [
         'Dosen Ananas',
         'Dosen pfirsich',
-        'Tomatenpüree', 'Pelati'
+        'Tomatenpüree', 'Pelatti'
     ],
 
     'Grundnahrungsmittel': [

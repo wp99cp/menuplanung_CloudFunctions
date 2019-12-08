@@ -34,6 +34,8 @@ const unitLookUp: UnitLookUpTable = {
   Stk: { factor: 1, baseUnit: 'Stk.' },
   stk: { factor: 1, baseUnit: 'Stk.' },
   Scheib: { factor: 1, baseUnit: 'Scheiben' },
+  'Scheib.': { factor: 1, baseUnit: 'Scheiben' },
+  El: { factor: 1, baseUnit: 'EL' },
   EL: { factor: 1, baseUnit: 'EL' },
   el: { factor: 1, baseUnit: 'EL' },
   TL: { factor: 0.3, baseUnit: 'EL' },
@@ -43,7 +45,10 @@ const unitLookUp: UnitLookUpTable = {
   Reih: { factor: 1, baseUnit: 'Reihe' },
   Reihe: { factor: 1, baseUnit: 'Reihe' },
   wenig: { factor: 0.00025, baseUnit: 'kg' },
-  lk: { factor: 0.3, baseUnit: 'EL' },
+  kl: { factor: 0.3, baseUnit: 'EL' },
+  Sack: { factor: 1, baseUnit: 'Sack' },
+  Zwg: { factor: 1, baseUnit: 'Zweig' },
+  Zweig: { factor: 1, baseUnit: 'Zweig' },
 
 };
 

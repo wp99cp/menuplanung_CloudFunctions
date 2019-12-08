@@ -1,12 +1,14 @@
 import * as functions from 'firebase-functions';
 import { ResponseData } from "./interface-responseData";
 import { createCampExportData, createShoppingListData, createMealsInfoData } from './exportData';
+import { campChanged, deleteCamp } from './changesInDatabase';
 
 import * as  admin from 'firebase-admin';
 
 // connect to firebase firestore database
 admin.initializeApp();
 export const db = admin.firestore();
+
 
 /**
  * 
@@ -17,19 +19,9 @@ export const db = admin.firestore();
  * @param createResponseFunction 
  * 
  */
-const createHTTPSfunc = (createResponseFunction: (requestData: any) => Promise<ResponseData>) => {
+const createCallableCloudFunc = (createResponseFunction: (requestData: any) => Promise<ResponseData>) => {
 
-    return functions
-
-        // sets the region on which the cloud functions get exicuded.
-        // this region must be also set in the call of the function
-        .region('europe-west1')
-
-        // only for testing
-        .runWith({
-            timeoutSeconds: 15,
-            memory: '128MB'
-        })
+    return cloudFunction()
 
         // creat a httpsCallable function
         .https.onCall((requestData, context) => {
@@ -41,6 +33,22 @@ const createHTTPSfunc = (createResponseFunction: (requestData: any) => Promise<R
 
 }
 
+const cloudFunction = () => {
+
+    return functions
+
+        // sets the region on which the cloud functions get exicuded.
+        // this region must be also set in the call of the function
+        .region('europe-west1')
+
+        // runtime setting
+        .runWith({
+            timeoutSeconds: 20,
+            memory: '256MB'
+        });
+
+};
+
 
 ////////////////////////////////////
 ////////////////////////////////////
@@ -48,13 +56,37 @@ const createHTTPSfunc = (createResponseFunction: (requestData: any) => Promise<R
 ////////////////////////////////////
 ////////////////////////////////////
 
-exports.getMealsInfoExport = createHTTPSfunc(createMealsInfoData);
+exports.getMealsInfoExport = createCallableCloudFunc(createMealsInfoData);
 
-exports.newUserCreated = functions.auth.user().onCreate((user) => {
+exports.newUserCreated = cloudFunction().auth.user().onCreate((user) => {
+
     console.log('new User created');
+    console.log(user);
+
+    // gibt einen Error!!!
+    db.collection('users')
+        .add({
+            firstName: user.displayName,
+            lastName: user.displayName,
+            mail: user.email,
+            sysAdmin: false,
+            uid: user.uid,
+            visibility: true
+        })
+        .catch(e => console.error(e));
+
+    return null;
 
 });
 
-exports.getCampInfoExport = createHTTPSfunc(createCampExportData);
+exports.getCampInfoExport = createCallableCloudFunc(createCampExportData);
 
-exports.getShoppingList = createHTTPSfunc(createShoppingListData);
+exports.getShoppingList = createCallableCloudFunc(createShoppingListData);
+
+exports.updateParticipants = cloudFunction()
+    .firestore.document('camps/{campId}')
+    .onUpdate(campChanged);
+
+exports.deleteCamp = cloudFunction()
+    .firestore.document('camps/{campId}')
+    .onDelete(deleteCamp);
