@@ -86,7 +86,7 @@ export class ShoppingList {
 
         this.list[foodName] = {
 
-            measure: measure + ing.measure * participants,
+            measure,
             unit: inBaseUnit.unit,
             category: category
 
