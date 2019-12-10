@@ -1,4 +1,5 @@
 import * as functions from 'firebase-functions';
+import { db } from '.';
 
 export function campChanged(change: functions.Change<FirebaseFirestore.DocumentSnapshot>, context: functions.EventContext) {
 
@@ -10,11 +11,12 @@ export function campChanged(change: functions.Change<FirebaseFirestore.DocumentS
 
 }
 
-export function deleteCamp(snapshot: FirebaseFirestore.DocumentSnapshot, context: functions.EventContext) {
+export async function deleteCamp(snapshot: FirebaseFirestore.DocumentSnapshot, context: functions.EventContext) {
 
-    // TODO: Delete all documents for this meal in the database
-    console.log('delete ');
-    console.log(snapshot.data())
+    const specificRecipesRefs = await db.collectionGroup('specificRecipes').where('campId', '==', snapshot.id).get();
+    specificRecipesRefs.forEach(doc => doc.ref.delete());
 
+    const specificMealsRefs = await db.collectionGroup('specificMeals').where('campId', '==', snapshot.id).get();
+    specificMealsRefs.forEach(doc => doc.ref.delete());
 
 }
