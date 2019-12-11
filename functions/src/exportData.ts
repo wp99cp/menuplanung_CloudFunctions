@@ -13,7 +13,6 @@ export class InvalidDocumentPath extends Error { }
  */
 export async function createCampExportData(requestData: any): Promise<ResponseData> {
 
-    // TODO: change to dynamic camp id
     const campId = requestData.campId;
 
     // load data form the database
@@ -45,8 +44,6 @@ export async function createShoppingListData(requestData: any): Promise<Response
 
         if (campId === undefined)
             throw new InvalidDocumentPath('undefined campId');
-
-
 
         // search for all specificRecipes with the given campId
         const refs = await db.collectionGroup('specificRecipes').where('campId', '==', campId).get();

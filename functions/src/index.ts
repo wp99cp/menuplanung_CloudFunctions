@@ -12,6 +12,8 @@ export const db = admin.firestore();
 
 /**
  * 
+ * TODO: export dieser Funktion in ein utils.ts document
+ * 
  * Creates a new https.onCall function with the basic settings
  * 
  * Used region: 'europe-west1'
@@ -33,6 +35,7 @@ const createCallableCloudFunc = (createResponseFunction: (requestData: any) => P
 
 }
 
+// TODO: export dieser Funktion in ein utils.ts document
 const cloudFunction = () => {
 
     return functions

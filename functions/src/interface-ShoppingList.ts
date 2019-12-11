@@ -5,7 +5,7 @@ import admin = require("firebase-admin");
 
 
 /**
- * 
+ * TODO: eigenes .ts file für dieses interface
  */
 interface ShoppingCard {
 
@@ -52,6 +52,9 @@ export class ShoppingList {
 
 
     /**
+     * 
+     * TODO: test für diese Funktion schreiben!!!
+     * 
      * Adds an ingredient to the shopping List.
      * 
      * Calculetes the mesurement with the given participants number. 

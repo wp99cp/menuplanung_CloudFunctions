@@ -2,9 +2,12 @@ import * as  admin from 'firebase-admin';
 import { db } from "./index";
 
 
+// TODO: Einheiten umrechnen können... wichtige Foodelemente
+// müssen in andere Einheiten umgerechnet werden könne.
+// z.B. Liter in Esslöffel...
+
 /**
  * interface for the unitLookUpTable
- * 
  */
 interface UnitLookUpTable {
 
