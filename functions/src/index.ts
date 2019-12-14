@@ -1,7 +1,7 @@
 import * as functions from 'firebase-functions';
 import { ResponseData } from "./interface-responseData";
 import { createCampExportData, createShoppingListData, createMealsInfoData } from './exportData';
-import { campChanged, deleteCamp } from './changesInDatabase';
+import { campChanged, deleteCamp, changeWeekTitle } from './changesInDatabase';
 
 import * as  admin from 'firebase-admin';
 
@@ -61,6 +61,10 @@ const cloudFunction = () => {
 
 exports.getMealsInfoExport = createCallableCloudFunc(createMealsInfoData);
 
+// TODO: diese Funktion funktioniert so nicht!! 
+// Idee: Nutzer bei seiner ersten Anmelding frage, ob sein Konto öffentlich sein soll
+// oder nicht... Namen angeben --> Dokument erstellen
+// --> wenn so umgesetzt diese Funktion ggf. löschen...
 exports.newUserCreated = cloudFunction().auth.user().onCreate((user) => {
 
     console.log('new User created');
@@ -89,6 +93,10 @@ exports.getShoppingList = createCallableCloudFunc(createShoppingListData);
 exports.updateParticipants = cloudFunction()
     .firestore.document('camps/{campId}')
     .onUpdate(campChanged);
+
+exports.updateWeekTitle = cloudFunction()
+    .firestore.document('meals/{mealId}/specificMeals/{specificMealId}')
+    .onUpdate(changeWeekTitle);
 
 exports.deleteCamp = cloudFunction()
     .firestore.document('camps/{campId}')

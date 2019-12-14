@@ -7,6 +7,13 @@ import { UnitConvertionError } from "./unitLookUpTable";
 
 export class InvalidDocumentPath extends Error { }
 
+
+// TODO: erweitern der Export Ansicht: Wochenplan, Rezepte inkl. Mengenangeben usw.
+// download der Einkaufsliste als CSV Dokument für die Weiterbearbeitung in z.B. Excel
+// settings zum Export, z.B. zu den Kategoriene (Ein-/ Ausbelden)
+// synched check-Boxes für Einkaufsliste... -> gemeinsames EInkaufen
+// PDF download nicht mehr nur über Chrome...
+
 /**
  * 
  * @param requestData 

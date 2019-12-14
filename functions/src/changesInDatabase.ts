@@ -2,9 +2,50 @@ import * as functions from 'firebase-functions';
 import { db } from '.';
 
 
-// TODO: wird eine Mahlzeit verändert (insbesonders Titel), so muss dieser in
-// jedem Lager aktuallisiert werden! --> ggf. eigenes Feld einführen für "Titel in der Wochenübersicht"
-// dann ist nur bei einer Veränderung dieses Feldes ein Update möglich. --> spart viele Schreib-Vorgänger in der DB
+/**
+ * Updated den weekTitle in dem zugehörigen Camp.
+ * 
+ * @param change 
+ * @param context 
+ */
+export async function changeWeekTitle(change: functions.Change<FirebaseFirestore.DocumentSnapshot>, context: functions.EventContext) {
+
+    const dataBefore = change.before.data();
+    const dataAfter = change.after.data();
+
+    if (dataBefore !== undefined && dataAfter !== undefined) {
+
+        const newWeekTitle = dataAfter.weekTitle;
+        if (dataBefore.weekTitle !== newWeekTitle) {
+
+
+            const camp = (await db.doc('camps/' + dataBefore.campId).get()).data();
+
+            if (camp === undefined)
+                throw new Error('camp not found');
+
+            // change title
+            camp.days.forEach((day: { meals: { forEach: (arg0: (meal: { specificId: string; description: any; }) => void) => void; }; }) =>
+                day.meals.forEach((meal: { specificId: string; description: any; }) => {
+
+                    if (meal.specificId === change.after.id) {
+                        meal.description = newWeekTitle;
+                    }
+
+                })
+            );
+
+            // write back to Databse
+            db.doc('camps/' + dataBefore.campId).set({ days: camp.days }, { merge: true }).catch();
+
+        }
+
+    }
+
+    return null;
+}
+
+
 
 export function campChanged(change: functions.Change<FirebaseFirestore.DocumentSnapshot>, context: functions.EventContext) {
 
