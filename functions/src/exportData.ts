@@ -23,18 +23,28 @@ export async function createCampExportData(requestData: any): Promise<ResponseDa
     const campId = requestData.campId;
 
     // load data form the database
-    const snapshot = await db.doc('camps/' + campId).get();
+    const campData = (await db.doc('camps/' + campId).get()).data();
 
-    // create the DataObject for the return
+    if (campData === undefined)
+        throw new Error("Can't find camp");
+
     return {
-        data: snapshot.data()
+        data: campData
     };
 
 };
 
 
 /**
- * creates a shoppingList for the requested campId
+ * Creates a shoppingList for the requested campId.
+ * 
+ * This creation works as following:
+ * 
+ * 1) It fetchs once the participants for the camp
+ * 2) For each specificMeal of the camp it calculates it's participants
+ * depending on the specificMealParticipants and the campParticipants
+ * 3) For each specificRecipe of a meal it calculates it's participants
+ * 4) add the recipe to the shoppingList and return it.
  * 
  */
 export async function createShoppingListData(requestData: any): Promise<ResponseData> {
@@ -43,50 +53,74 @@ export async function createShoppingListData(requestData: any): Promise<Response
     const shoppingList: ShoppingList = new ShoppingList(categoryList);
 
     // log errors form the function
-    const err: string[] = [];
+    const errorLogs: string[] = [];
 
     try {
 
+        // undefined campId
         const campId: string = requestData.campId;
-
         if (campId === undefined)
             throw new InvalidDocumentPath('undefined campId');
 
-        // search for all specificRecipes with the given campId
-        const refs = await db.collectionGroup('specificRecipes').where('campId', '==', campId).get();
+        // load the participants form the current camp
+        const campData = (await db.doc('camps/' + campId).get()).data();
+        if (campData === undefined)
+            throw new Error('camp not found');
+        const campParticipants = campData.participants;
+        console.log('Teilnehmerinnen Lager: ' + campParticipants)
 
-        // for each specificRecipe
-        await Promise.all(refs.docs.map(async (specRecip) => await addRecipeToShoppingList(specRecip, shoppingList, err)));
+        // search for all specificMeals with the given campId
+        const refs = await db.collectionGroup('specificMeals').where('campId', '==', campId).get();
+        await Promise.all(refs.docs.map(async (specMeal) =>
+            await addMealToShoppingList(specMeal, shoppingList, campParticipants, errorLogs)));
 
     } catch (e) {
 
         if (e instanceof InvalidDocumentPath)
-            err.push('Can\'t load data: ' + e);
+            errorLogs.push('Can\'t load data: ' + e);
 
     }
 
-    return { data: shoppingList.getList(), error: err };
+    // return the shoppingList and the errorLog to the customer
+    const returnData = {
+        data: shoppingList.getList(),
+        error: errorLogs
+    };
+    return returnData;
 
 }
 
+async function addMealToShoppingList(specificMealDoc: FirebaseFirestore.QueryDocumentSnapshot, shoppingList: ShoppingList, campParticipants: number, errorLogs: string[]) {
 
+    // set the mealParticipants form specificMeal (if overrided) or form the campParticipants
+    const mealParticipants = specificMealDoc.data().overrideParticipants ? specificMealDoc.data().participants : campParticipants;
 
-async function addRecipeToShoppingList(specificRecipeDoc: FirebaseFirestore.QueryDocumentSnapshot, shoppingList: ShoppingList, err: string[]) {
+    console.log('Teilnehmerinnen Mahlzeit: ' + mealParticipants)
+
+    // search for all specificRecipes with the given campId for the given specificMeal
+    const refs = await db.collectionGroup('specificRecipes')
+        .where('specificMealId', '==', specificMealDoc.id).get();
+    await Promise.all(refs.docs.map(async (specMeal) =>
+        await addRecipeToShoppingList(specMeal, shoppingList, mealParticipants, errorLogs)));
+
+}
+
+async function addRecipeToShoppingList(specificRecipeDoc: FirebaseFirestore.QueryDocumentSnapshot, shoppingList: ShoppingList, mealParticipants: number, err: string[]) {
 
     let recipeRef: string = '';
-
     if (specificRecipeDoc.ref.parent.parent === null) {
         throw new InvalidDocumentPath('undefined path');
     }
-
     recipeRef = specificRecipeDoc.ref.parent.parent.path;
 
     // get the participants for this recipes
-    const participants: number = specificRecipeDoc.data().participants;
+    const specRecipeData = specificRecipeDoc.data();
+    const participants: number = specRecipeData.overrideParticipants ? specRecipeData.participants : mealParticipants;
 
-    // load the ingredient data for the ricipe
+    console.log('Teilnehmerinnen Rezept: ' + participants)
+
+    // load the ingredient data for the recipe (not form the specificRecipe)
     const data = (await db.doc(recipeRef).get()).data();
-
     if (data === undefined) {
         throw new InvalidDocumentPath('undefined path');
     }
@@ -121,7 +155,7 @@ function addToShoppingList(shoppingList: ShoppingList, ingredient: Ingredient, p
  */
 export async function createMealsInfoData(): Promise<ResponseData> {
     return await {
-        data: {
+        data: [{
             name: 'Zmittag',
             meal: 'Hörndli und Ghacktes',
             date: 'Mittwoch, 30. November 2019',
@@ -130,6 +164,6 @@ export async function createMealsInfoData(): Promise<ResponseData> {
                     name: 'Hörndli und Ghacktes'
                 }
             ]
-        }
+        }]
     };
 }
