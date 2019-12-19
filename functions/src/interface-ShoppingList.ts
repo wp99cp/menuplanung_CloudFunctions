@@ -3,7 +3,6 @@ import { Ingredient } from "./interface-ingredient";
 import { db } from "./index";
 import admin = require("firebase-admin");
 
-
 /**
  * TODO: eigenes .ts file für dieses interface
  */
@@ -70,6 +69,9 @@ export class ShoppingList {
         if (foodName === '')
             return;
 
+        // TODO: add incompatible Units twice in different units
+        // TODO: allow empty unit field
+        // TODO: allow etwas -> add without unit
         const inBaseUnit = toBaseUnitMeasure(ing.measure, ing.unit);
 
         let measure = 0;

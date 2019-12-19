@@ -148,8 +148,6 @@ function addToShoppingList(shoppingList: ShoppingList, ingredient: Ingredient, p
 }
 
 
-
-
 /**
  * 
  */
