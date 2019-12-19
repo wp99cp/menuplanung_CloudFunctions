@@ -36,6 +36,7 @@ const unitLookUp: UnitLookUpTable = {
   'stk.': { factor: 1, baseUnit: 'Stk.' },
   Stk: { factor: 1, baseUnit: 'Stk.' },
   stk: { factor: 1, baseUnit: 'Stk.' },
+  Scheiben: { factor: 1, baseUnit: 'Scheiben' },
   Scheib: { factor: 1, baseUnit: 'Scheiben' },
   'Scheib.': { factor: 1, baseUnit: 'Scheiben' },
   El: { factor: 1, baseUnit: 'EL' },
