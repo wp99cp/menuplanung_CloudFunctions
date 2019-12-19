@@ -66,6 +66,10 @@ export class ShoppingList {
 
         const foodName = ing.food.trim().replace(/[\r\n]+/gm, '')
 
+        // ignore empty FoodItems
+        if (foodName === '')
+            return;
+
         const inBaseUnit = toBaseUnitMeasure(ing.measure, ing.unit);
 
         let measure = 0;
