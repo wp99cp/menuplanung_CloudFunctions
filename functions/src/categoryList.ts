@@ -8,7 +8,8 @@ export const categoryList = {
     ],
 
     'Fleisch & Fisch': [
-        'Hackfleisch', 'Schweis-Geschnetzeltes', 'Geschnetzeltes', 'Schweins geschnetzeltes', 'Kalbs-Geschnetzeltes',
+        'Fleisch',
+        'Hackfleisch', 'Schweis-Geschnetzeltes', 'Geschnetzeltes', 'Gechnätzeltes', 'Schweins geschnetzeltes', 'Kalbs-Geschnetzeltes',
         'Filet', 'Braten',
         'Speck', 'Bratspeck',
         'Poulet', 'Poulet ganz', 'Poulet-Schenkel', 'Poulet Geschnetzeltes',
@@ -33,18 +34,19 @@ export const categoryList = {
         'Teigwaren', 'Spaghetti', 'Tagliatelle', 'Penne', 'Fusilli', 'Lasagneblätter', 'Maccheroni', 'Tortiglioni', 'Hörndli', 'Nudeln',
         'Rollgersten', 'Polenta', 'Couscous', 'Quinoa',
         'Linsen', 'Kichererbsen', 'Bonen', 'Grüne Linsen', 'Rote Linsen', 'Hartweizengriess',
-        'Pinienkrene', 'Leinsamen', 'Sesan'
+        'Pinienkrene', 'Leinsamen', 'Sesan',
+        'Rösti'
 
     ],
 
     'Milchprodukte und Eier': [
         'Milch', 'Vollmilch',
         'Käse', 'Reibkäse', 'Parmesan',
-        'Butter', 'Margarine', 'Kochbutter',
+        'Butter', 'Margarine', 'Kochbutter', 'Butter, weich',
         'Rahm', 'Vollrahm', 'Halbrahm',
-        'Ei', 'Eier',
+        'Ei', 'Eier', 'Eigelb', 'Eiweiss',
         'Jogurt', 'Nature Jogurt', 'Naturejogurt',
-        'Quark', 'Mascarpone'
+        'Quark', 'Mascarpone', 'Rahmquark'
     ],
 
     'Gewürze': [
@@ -68,12 +70,12 @@ export const categoryList = {
         'Bananen',
         'Karotten', 'Rüebli',
         'Blumenkohl',
-        'Kartoffeln', 'Kartoffeln festkochend', 'Kartoffeln mehligkochend',
-        'Knoblauch', 'Knoblauchzehen',
+        'Kartoffeln', 'Kartoffeln festkochend', 'Kartoffeln mehligkochend', 'mehlig kochende Kartoffeln',
+        'Knoblauch', 'Knoblauchzehen', 'Zwiebel',
         'Frucht', 'Früchte',
         'Saisongemüse',
         'Blumenkohl', 'Broccoli', 'Wirz', 'Weisskabis', 'Rotkabis', 'Palmkohl', 'Kabis', 'Federkohl',
-        'Aubergine', 'Zucchetti',
+        'Aubergine', 'Zucchetti', 'Peperoni',
         'Bohnen', 'Mais',
         'Spargeln',
         'Fenchel',
