@@ -61,6 +61,7 @@ const cloudFunction = () => {
 
 exports.getMealsInfoExport = createCallableCloudFunc(createMealsInfoData);
 
+
 // TODO: diese Funktion funktioniert so nicht!! 
 // Idee: Nutzer bei seiner ersten Anmelding frage, ob sein Konto öffentlich sein soll
 // oder nicht... Namen angeben --> Dokument erstellen
