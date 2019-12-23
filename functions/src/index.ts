@@ -71,7 +71,6 @@ exports.newUserCreated = cloudFunction().auth.user().onCreate((user) => {
     console.log('new User created');
     console.log(user);
 
-    // gibt einen Error!!!
     db.collection('users')
         .add({
             firstName: user.displayName,
@@ -79,7 +78,7 @@ exports.newUserCreated = cloudFunction().auth.user().onCreate((user) => {
             mail: user.email,
             sysAdmin: false,
             uid: user.uid,
-            visibility: true
+            visibility: 'visible'
         })
         .catch(e => console.error(e));
 
