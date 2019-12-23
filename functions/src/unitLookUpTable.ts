@@ -47,6 +47,7 @@ const unitLookUp: UnitLookUpTable = {
   el: { factor: 1, baseUnit: 'EL' },
   TL: { factor: 0.3, baseUnit: 'EL' },
   tl: { factor: 0.3, baseUnit: 'EL' },
+  'Päckchen': { factor: 1, baseUnit: 'Packung' },
   Pack: { factor: 1, baseUnit: 'Packung' },
   Packung: { factor: 1, baseUnit: 'Packung' },
   Reih: { factor: 1, baseUnit: 'Reihe' },
@@ -56,7 +57,8 @@ const unitLookUp: UnitLookUpTable = {
   Sack: { factor: 1, baseUnit: 'Sack' },
   Zwg: { factor: 1, baseUnit: 'Zweig' },
   Zweig: { factor: 1, baseUnit: 'Zweig' },
-
+  'Msp.': { factor: 1, baseUnit: 'Msp.' },
+  'Messerspitze': { factor: 1, baseUnit: 'Msp.' },
 };
 
 /**
