@@ -2,9 +2,11 @@
 export const categoryList = {
 
     'Backwahren': [
-        'Brot', 'Zopf', 'Chrustenkrank', 'Rauchbrot', 'Weissbrot', 'Silserkranz', 'Olivenbrot', 'Tessinerbrot',
+        'Brot', 'Zopf', 'Chrustenkrank', 'Rauchbrot', 'Ruchbrot', 'Weissbrot', 'Silserkranz', 'Olivenbrot', 'Tessinerbrot', 'Nussbrot',
         'Mehl', 'Weissmehl', 'Dinkelmehl',
-        'Guetlsi', 'Petit Beurre'
+        'Puderzucker', 'Vanillezucker',
+        'Guetlsi', 'Petit Beurre',
+        'Mandeln'
     ],
 
     'Fleisch & Fisch': [
@@ -24,7 +26,7 @@ export const categoryList = {
     ],
 
     'Brotaufstrich': [
-        'Honig', 'Nutella', 'Konfitüre', 'Ovomaltine'
+        'Honig', 'Nutella', 'Konfitüre', 'Ovomaltine', 'Konfiture'
     ],
 
     'Grundnahrungsmittel': [
@@ -42,8 +44,8 @@ export const categoryList = {
     'Milchprodukte und Eier': [
         'Milch', 'Vollmilch',
         'Käse', 'Reibkäse', 'Parmesan',
-        'Butter', 'Margarine', 'Kochbutter', 'Butter, weich',
-        'Rahm', 'Vollrahm', 'Halbrahm',
+        'Butter', 'Anke', 'Margarine', 'Kochbutter', 'Butter, weich',
+        'Rahm', 'Vollrahm', 'Halbrahm', 'saurer Halbrahm',
         'Ei', 'Eier', 'Eigelb', 'Eiweiss',
         'Jogurt', 'Nature Jogurt', 'Naturejogurt',
         'Quark', 'Mascarpone', 'Rahmquark'
@@ -58,7 +60,8 @@ export const categoryList = {
         'Garam Masala',
         'Kreuzkümmelsamen',
         'Kurkuma',
-        'Fenchelsamen'
+        'Fenchelsamen',
+        'Petersilie'
     ],
 
     'Früchte und Gemüse': [
@@ -82,7 +85,8 @@ export const categoryList = {
         'Lauch',
         'Pilze', 'Champignons', 'Eierschwämmli',
         'Kürbis', 'Erdnüsse',
-        'Spinat'
+        'Spinat',
+        'Salat', 'Rucola'
     ],
 
     'Süsses und Snacks': [
