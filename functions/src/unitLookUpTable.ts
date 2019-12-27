@@ -44,6 +44,7 @@ const unitLookUp: UnitLookUpTable = {
   'Scheib.': { factor: 1, baseUnit: 'Scheiben' },
   El: { factor: 1, baseUnit: 'EL' },
   EL: { factor: 1, baseUnit: 'EL' },
+  Esslöffel: { factor: 1, baseUnit: 'EL' },
   el: { factor: 1, baseUnit: 'EL' },
   TL: { factor: 0.3, baseUnit: 'EL' },
   tl: { factor: 0.3, baseUnit: 'EL' },
@@ -59,6 +60,8 @@ const unitLookUp: UnitLookUpTable = {
   Zweig: { factor: 1, baseUnit: 'Zweig' },
   'Msp.': { factor: 1, baseUnit: 'Msp.' },
   'Messerspitze': { factor: 1, baseUnit: 'Msp.' },
+  'Blatt': { factor: 1, baseUnit: 'Blatt' },
+
 };
 
 /**
