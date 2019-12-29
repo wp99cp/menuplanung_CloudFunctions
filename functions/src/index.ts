@@ -1,7 +1,7 @@
 import * as functions from 'firebase-functions';
 import { ResponseData } from "./interface-responseData";
 import { createCampExportData, createShoppingListData, createMealsInfoData } from './exportData';
-import { deleteCamp, changeWeekTitle } from './changesInDatabase';
+import { deleteCamp, changesInSpecificMeal } from './changesInDatabase';
 
 import * as  admin from 'firebase-admin';
 
@@ -92,7 +92,7 @@ exports.getShoppingList = createCallableCloudFunc(createShoppingListData);
 
 exports.updateWeekTitle = cloudFunction()
     .firestore.document('meals/{mealId}/specificMeals/{specificMealId}')
-    .onUpdate(changeWeekTitle);
+    .onUpdate(changesInSpecificMeal);
 
 exports.deleteCamp = cloudFunction()
     .firestore.document('camps/{campId}')

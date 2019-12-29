@@ -83,7 +83,7 @@ export class ShoppingList {
             category = this.list[foodName].category;
 
             if (this.list[foodName].unit !== inBaseUnit.unit)
-                throw new UnitMismatchingError('Can\'t add ' + inBaseUnit.unit + ' to ' + this.list[ing.unit]);
+                throw new UnitMismatchingError('Can\'t add ' + inBaseUnit.unit + ' to ' + this.list[foodName].unit);
 
 
         }

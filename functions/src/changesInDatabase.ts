@@ -7,7 +7,7 @@ import { db } from '.';
  * @param change 
  * @param context 
  */
-export async function changeWeekTitle(change: functions.Change<FirebaseFirestore.DocumentSnapshot>, context: functions.EventContext) {
+export async function changesInSpecificMeal(change: functions.Change<FirebaseFirestore.DocumentSnapshot>) {
 
     const dataBefore = change.before.data();
     const dataAfter = change.after.data();
@@ -15,7 +15,9 @@ export async function changeWeekTitle(change: functions.Change<FirebaseFirestore
     if (dataBefore !== undefined && dataAfter !== undefined) {
 
         const newWeekTitle = dataAfter.weekTitle;
-        if (dataBefore.weekTitle !== newWeekTitle) {
+        const participantsWarning = dataAfter.overrideParticipants;
+
+        if (dataBefore.weekTitle !== newWeekTitle || dataBefore.participantsWarning !== participantsWarning) {
 
 
             const camp = (await db.doc('camps/' + dataBefore.campId).get()).data();
@@ -25,10 +27,13 @@ export async function changeWeekTitle(change: functions.Change<FirebaseFirestore
 
             // change title
             camp.days.forEach((day: { meals: { forEach: (arg0: (meal: { specificId: string; description: any; }) => void) => void; }; }) =>
-                day.meals.forEach((meal: { specificId: string; description: any; }) => {
+                day.meals.forEach((meal: { specificId: string; description: any; participantsWarning?: boolean }) => {
 
                     if (meal.specificId === change.after.id) {
+
                         meal.description = newWeekTitle;
+                        meal.participantsWarning = participantsWarning;
+
                     }
 
                 })
