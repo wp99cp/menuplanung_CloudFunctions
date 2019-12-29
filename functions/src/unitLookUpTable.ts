@@ -54,6 +54,7 @@ const unitLookUp: UnitLookUpTable = {
   Reih: { factor: 1, baseUnit: 'Reihe' },
   Reihe: { factor: 1, baseUnit: 'Reihe' },
   wenig: { factor: 0.00025, baseUnit: 'kg' },
+  etwas: { factor: 0.00025, baseUnit: 'kg' },
   kl: { factor: 0.3, baseUnit: 'EL' },
   Sack: { factor: 1, baseUnit: 'Sack' },
   Zwg: { factor: 1, baseUnit: 'Zweig' },

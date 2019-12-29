@@ -13,9 +13,10 @@ export const categoryList = {
         'Fleisch',
         'Hackfleisch', 'Schweis-Geschnetzeltes', 'Geschnetzeltes', 'Gechnätzeltes', 'Schweins geschnetzeltes', 'Kalbs-Geschnetzeltes',
         'Filet', 'Braten',
-        'Speck', 'Bratspeck',
+        'Speck', 'Bratspeck', 'Schinkenwürfelchen',
         'Poulet', 'Poulet ganz', 'Poulet-Schenkel', 'Poulet Geschnetzeltes',
-        'Schweinshalsbraten'
+        'Schweinshalsbraten',
+        'Kalbfleisch'
     ],
 
     'Konserven': [
@@ -43,12 +44,13 @@ export const categoryList = {
 
     'Milchprodukte und Eier': [
         'Milch', 'Vollmilch',
-        'Käse', 'Reibkäse', 'Parmesan',
+        'Käse', 'Reibkäse', 'Parmesan', 'Sbrinz',
         'Butter', 'Anke', 'Margarine', 'Kochbutter', 'Butter, weich',
         'Rahm', 'Vollrahm', 'Halbrahm', 'saurer Halbrahm',
         'Ei', 'Eier', 'Eigelb', 'Eiweiss',
         'Jogurt', 'Nature Jogurt', 'Naturejogurt',
-        'Quark', 'Mascarpone', 'Rahmquark'
+        'Quark', 'Mascarpone', 'Rahmquark',
+        'Bratbutter'
     ],
 
     'Gewürze': [
@@ -61,7 +63,7 @@ export const categoryList = {
         'Kreuzkümmelsamen',
         'Kurkuma',
         'Fenchelsamen',
-        'Petersilie'
+        'Petersilie', 'gehackte Petersilie'
     ],
 
     'Früchte und Gemüse': [
@@ -86,7 +88,9 @@ export const categoryList = {
         'Pilze', 'Champignons', 'Eierschwämmli',
         'Kürbis', 'Erdnüsse',
         'Spinat',
-        'Salat', 'Rucola'
+        'Salat', 'Rucola',
+        'Tomaten',
+        'Zitronenschale'
     ],
 
     'Süsses und Snacks': [
@@ -102,6 +106,10 @@ export const categoryList = {
         'Alufolie', 'Backpapier', 'Frischhaltefolie',
         'Abwaschmittel', 'Schwamm', 'Abwaschbürste',
         'Kerichtsack', 'Züri-Sack'
+    ],
+
+    'Getränke & Wein': [
+        'Weisswein', 'Rotwein', 'Kochwein'
     ],
 
     'Essig & Öl': [
