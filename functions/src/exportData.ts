@@ -66,13 +66,12 @@ export async function createShoppingListData(requestData: any): Promise<Response
         const campData = (await db.doc('camps/' + campId).get()).data();
         if (campData === undefined)
             throw new Error('camp not found');
-        const campParticipants = campData.participants;
-        console.log('Teilnehmerinnen Lager: ' + campParticipants)
+
 
         // search for all specificMeals with the given campId
         const refs = await db.collectionGroup('specificMeals').where('campId', '==', campId).get();
         await Promise.all(refs.docs.map(async (specMeal) =>
-            await addMealToShoppingList(specMeal, shoppingList, campParticipants, errorLogs)));
+            await addMealToShoppingList(specMeal, shoppingList, campData as { participants: number, vegetarier: number }, errorLogs)));
 
     } catch (e) {
 
@@ -90,10 +89,10 @@ export async function createShoppingListData(requestData: any): Promise<Response
 
 }
 
-async function addMealToShoppingList(specificMealDoc: FirebaseFirestore.QueryDocumentSnapshot, shoppingList: ShoppingList, campParticipants: number, errorLogs: string[]) {
+async function addMealToShoppingList(specificMealDoc: FirebaseFirestore.QueryDocumentSnapshot, shoppingList: ShoppingList, campData: { participants: number, vegetarier: number }, errorLogs: string[]) {
 
     // set the mealParticipants form specificMeal (if overrided) or form the campParticipants
-    const mealParticipants = specificMealDoc.data().overrideParticipants ? specificMealDoc.data().participants : campParticipants;
+    const mealParticipants = specificMealDoc.data().overrideParticipants ? specificMealDoc.data().participants : campData.participants;
 
     console.log('Teilnehmerinnen Mahlzeit: ' + mealParticipants)
 
@@ -101,11 +100,11 @@ async function addMealToShoppingList(specificMealDoc: FirebaseFirestore.QueryDoc
     const refs = await db.collectionGroup('specificRecipes')
         .where('specificMealId', '==', specificMealDoc.id).get();
     await Promise.all(refs.docs.map(async (specMeal) =>
-        await addRecipeToShoppingList(specMeal, shoppingList, mealParticipants, errorLogs)));
+        await addRecipeToShoppingList(specMeal, shoppingList, mealParticipants, campData, errorLogs)));
 
 }
 
-async function addRecipeToShoppingList(specificRecipeDoc: FirebaseFirestore.QueryDocumentSnapshot, shoppingList: ShoppingList, mealParticipants: number, err: string[]) {
+async function addRecipeToShoppingList(specificRecipeDoc: FirebaseFirestore.QueryDocumentSnapshot, shoppingList: ShoppingList, mealParticipants: number, campData: { participants: number, vegetarier: number }, err: string[]) {
 
     let recipeRef: string = '';
     if (specificRecipeDoc.ref.parent.parent === null) {
@@ -115,7 +114,25 @@ async function addRecipeToShoppingList(specificRecipeDoc: FirebaseFirestore.Quer
 
     // get the participants for this recipes
     const specRecipeData = specificRecipeDoc.data();
-    const participants: number = specRecipeData.overrideParticipants ? specRecipeData.participants : mealParticipants;
+    let participants: number = specRecipeData.overrideParticipants ? specRecipeData.participants : mealParticipants;
+
+    if (specRecipeData.vegi !== undefined) {
+
+        switch (specRecipeData.vegi) {
+
+            case 'vegiOnly':
+                participants = campData.vegetarier;
+                break;
+            case 'nonVegi':
+                participants = participants - campData.vegetarier;
+                break;
+            default:
+                participants = participants;
+
+        }
+
+    }
+
 
     console.log('Teilnehmerinnen Rezept: ' + participants)
 
