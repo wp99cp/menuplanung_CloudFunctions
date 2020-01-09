@@ -5,8 +5,14 @@ import { deleteCamp, changesInSpecificMeal } from './changesInDatabase';
 
 import * as  admin from 'firebase-admin';
 
+const serviceAccount = require("../keys/cevizh11-menuplanung-firebase-adminsdk-woa27-e2e122f8d6.json");
+
 // connect to firebase firestore database
-admin.initializeApp();
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    databaseURL: "https://cevizh11-menuplanung.firebaseio.com"
+});
+
 export const db = admin.firestore();
 
 
@@ -68,21 +74,19 @@ exports.getMealsInfoExport = createCallableCloudFunc(createMealsInfoData);
 // --> wenn so umgesetzt diese Funktion ggf. löschen...
 exports.newUserCreated = cloudFunction().auth.user().onCreate((user) => {
 
-    console.log('new User created');
-    console.log(user);
-
     db.collection('users')
         .add({
-            firstName: user.displayName,
-            lastName: user.displayName,
-            mail: user.email,
+            access: { owner: [user.uid], editor: [] },
+            displayName: user.displayName,
+            email: user.email,
             sysAdmin: false,
             uid: user.uid,
             visibility: 'visible'
         })
+        .then(() => console.log('Added user ' + user.displayName))
         .catch(e => console.error(e));
 
-    return null;
+    return true;
 
 });
 
