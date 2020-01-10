@@ -1,0 +1,108 @@
+// Security rules for eMeal Firebase Firestore Database
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // checks if the user is signed in
+    function isAuth(){
+
+        return request.auth != null;
+
+    }
+
+    // check's if the user has access to this document
+    function hasAccess() {
+
+        return
+            request.auth.uid in resource.data.access.owner || 
+            request.auth.uid in resource.data.access.editor;
+
+    }
+
+    // check's if the user is the owner of this document
+    function isOwner(data) {
+
+        return
+            request.auth.uid in data.access.owner;
+
+    }
+
+    // checks if the access property got changed and whether he is allowed to do this
+    function checkAccessChanges(){
+
+        return
+            // nothing changed in access data
+            request.resource.data.access == resource.data.access ||
+            // only owners can change access data and only afterwards at least on owner exist
+            (isOwner(resource.data) && request.resource.data.access.owner.size() != 0)
+
+
+    }
+
+    // this ignores all other security rules
+    // match /{allPaths=**} {
+
+        // sysAdmins can read and write to every document in the database.
+        // allow read, write: if request.auth.token.sysAdmin == true;
+
+    //}
+
+    // user collecion
+    match /users/{userDocID} {
+
+        // checks if the changes to a user document are valid
+        function validChanges(){
+
+            return
+                request.resource.data.displayName.size() > 3 &&
+                // can't change it's email
+                request.resource.data.email == resource.data.email &&
+                // can't change it's own uid
+                request.resource.data.uid == resource.data.uid &&
+                request.resource.data.visibility in ['visible', 'hidden'] &&
+                // only this 4 fields are allowed
+                request.resource.data.size() == 4;
+
+        }
+
+        // A user only can edit it's own user document
+        // He can only change it's displayed name and the visibility-properity
+        allow update: if resource.data.uid == request.auth.uid && validChanges();
+
+        // all visible user can be listed if the requesting user is signed in
+        allow list, get: if resource.data.visibility == 'visible' && isAuth();
+
+    }
+
+    // shared data can be read but not write to it
+    match /sharedData/{document=**} {
+
+        allow read, list: if isAuth();
+
+    }
+
+    // camps colelction
+    match /camps/{campID} {
+
+        function validChanges(){
+
+            return
+                // participants fields are numbers
+                request.resource.data.participants is number &&
+                request.resource.data.vegetarier is number &&
+                // has name
+                request.resource.data.name.size() > 0;
+
+        }
+
+        // every auth user can create camps on which he has access
+        allow create: if isAuth() && isOwner(request.resource.data) && validChanges();
+
+        allow update: if checkAccessChanges() && validChanges();
+        allow list, get: if hasAccess();
+        allow delete: if isOwner();
+
+    }
+ 
+ }
+
+}

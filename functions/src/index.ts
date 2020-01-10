@@ -76,10 +76,8 @@ exports.newUserCreated = cloudFunction().auth.user().onCreate((user) => {
 
     db.collection('users')
         .add({
-            access: { owner: [user.uid], editor: [] },
             displayName: user.displayName,
             email: user.email,
-            sysAdmin: false,
             uid: user.uid,
             visibility: 'visible'
         })
