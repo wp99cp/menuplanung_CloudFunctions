@@ -74,11 +74,10 @@ exports.getMealsInfoExport = createCallableCloudFunc(createMealsInfoData);
 // --> wenn so umgesetzt diese Funktion ggf. löschen...
 exports.newUserCreated = cloudFunction().auth.user().onCreate((user) => {
 
-    db.collection('users')
-        .add({
+    db.collection('users').doc(user.uid)
+        .set({
             displayName: user.displayName,
             email: user.email,
-            uid: user.uid,
             visibility: 'visible'
         })
         .then(() => console.log('Added user ' + user.displayName))

@@ -12,17 +12,14 @@ service cloud.firestore {
     // check's if the user has access to this document
     function hasAccess() {
 
-        return
-            request.auth.uid in resource.data.access.owner || 
-            request.auth.uid in resource.data.access.editor;
+        return resource.data.access[request.auth.uid] in ['owner', 'editor'];
 
     }
 
     // check's if the user is the owner of this document
     function isOwner(data) {
 
-        return
-            request.auth.uid in data.access.owner;
+        return data.access[request.auth.uid] == 'owner';
 
     }
 
@@ -33,21 +30,14 @@ service cloud.firestore {
             // nothing changed in access data
             request.resource.data.access == resource.data.access ||
             // only owners can change access data and only afterwards at least on owner exist
-            (isOwner(resource.data) && request.resource.data.access.owner.size() != 0)
+            (isOwner(resource.data) && 'owner' in request.resource.data.access.values());
 
 
     }
 
-    // this ignores all other security rules
-    // match /{allPaths=**} {
-
-        // sysAdmins can read and write to every document in the database.
-        // allow read, write: if request.auth.token.sysAdmin == true;
-
-    //}
 
     // user collecion
-    match /users/{userDocID} {
+    match /users/{userID} {
 
         // checks if the changes to a user document are valid
         function validChanges(){
@@ -57,10 +47,10 @@ service cloud.firestore {
                 // can't change it's email
                 request.resource.data.email == resource.data.email &&
                 // can't change it's own uid
-                request.resource.data.uid == resource.data.uid &&
                 request.resource.data.visibility in ['visible', 'hidden'] &&
-                // only this 4 fields are allowed
-                request.resource.data.size() == 4;
+                // only this 3 fields are allowed
+                request.resource.data.keys().hasAll(['displayName', 'email', 'visibility']) &&
+                request.resource.data.size() == 3;
 
         }
 
@@ -73,12 +63,14 @@ service cloud.firestore {
 
     }
 
+
     // shared data can be read but not write to it
     match /sharedData/{document=**} {
 
         allow read, list: if isAuth();
 
     }
+
 
     // camps colelction
     match /camps/{campID} {
@@ -97,12 +89,89 @@ service cloud.firestore {
         // every auth user can create camps on which he has access
         allow create: if isAuth() && isOwner(request.resource.data) && validChanges();
 
-        allow update: if checkAccessChanges() && validChanges();
+        allow update: if hasAccess() && checkAccessChanges() && validChanges();
         allow list, get: if hasAccess();
         allow delete: if isOwner();
 
     }
  
+
+
+    // Meals
+    match /meals/{mealID} {
+
+        function validChanges(){
+            return 
+                // has name
+                request.resource.data.name is string &&
+                request.resource.data.name.size() > 0;
+
+        }
+
+        allow create: if isAuth() && isOwner(request.resource.data) && validChanges();
+        allow list, get: if hasAccess();
+        allow update: if hasAccess() && checkAccessChanges() && validChanges();
+        allow delete: if isOwner();
+
+
+
+        // specific Meals
+        match /specificMeals/{specificMealID} {
+ 
+             function validChanges(){
+
+               return true;
+
+            }
+
+            // TODO: add verification or access rules
+            allow create:  if isAuth() && validChanges();
+            allow get; // list is not allowed
+            allow update: if validChanges();
+            allow delete;
+
+        }
+
+
+        // recipes
+        match /recipes/{recipeID} {
+
+            function validChanges(){
+
+                return true;
+
+            }
+
+            allow create: if isAuth() && isOwner(request.resource.data) && validChanges();
+            allow list, get: if hasAccess();
+            allow update: if hasAccess() && checkAccessChanges() && validChanges();
+            allow delete: if isOwner();
+
+
+
+            // specific recipes
+             match /specificRecipes/{specificRecipeID} {
+ 
+                function validChanges(){
+
+                    return true;
+
+                }
+
+                // TODO: add verification or access rules
+                allow create:  if isAuth() && validChanges();
+                allow get; // list is not allowed
+                allow update: if validChanges();
+                allow delete;
+
+            }
+
+
+        }
+
+    }
+
+
  }
 
 }
