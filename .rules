@@ -1,3 +1,5 @@
+rules_version = '2';
+
 // Security rules for eMeal Firebase Firestore Database
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -30,7 +32,7 @@ service cloud.firestore {
             // nothing changed in access data
             request.resource.data.access == resource.data.access ||
             // only owners can change access data and only afterwards at least on owner exist
-            (isOwner(resource.data) && 'owner' in request.resource.data.access.values());
+            (hasAccess() && 'owner' in request.resource.data.access.values());
 
 
     }
@@ -97,6 +99,13 @@ service cloud.firestore {
  
 
 
+    // group query for delete specificRecipes
+        match /{path=**}/specificRecipes/{specificRecipeID} {
+
+            // TODO: not save
+            allow read;
+        }
+
     // Meals
     match /meals/{mealID} {
 
@@ -126,11 +135,15 @@ service cloud.firestore {
 
             // TODO: add verification or access rules
             allow create:  if isAuth() && validChanges();
-            allow get; // list is not allowed
+            allow get, list; // list is not allowed
             allow update: if validChanges();
             allow delete;
 
         }
+
+
+
+
 
 
         // recipes
@@ -160,7 +173,7 @@ service cloud.firestore {
 
                 // TODO: add verification or access rules
                 allow create:  if isAuth() && validChanges();
-                allow get; // list is not allowed
+                allow get, list; // list is not allowed
                 allow update: if validChanges();
                 allow delete;
 
