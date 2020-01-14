@@ -61,7 +61,7 @@ service cloud.firestore {
         allow update: if resource.data.uid == request.auth.uid && validChanges();
 
         // all visible user can be listed if the requesting user is signed in
-        allow list, get: if resource.data.visibility == 'visible' && isAuth();
+        allow list, get: if (resource.data.visibility == 'visible' || userID == request.auth.uid) && isAuth();
 
     }
 

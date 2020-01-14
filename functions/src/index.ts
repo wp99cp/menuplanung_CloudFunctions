@@ -2,16 +2,30 @@ import * as functions from 'firebase-functions';
 import { ResponseData } from "./interface-responseData";
 import { createCampExportData, createShoppingListData, createMealsInfoData } from './exportData';
 import { deleteCamp, changesInSpecificMeal } from './changesInDatabase';
-
 import * as  admin from 'firebase-admin';
 
-const serviceAccount = require("../keys/cevizh11-menuplanung-firebase-adminsdk-woa27-e2e122f8d6.json");
+// Use to set correct projectId and serviceAccount
+const prod = false;
 
-// connect to firebase firestore database
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    databaseURL: "https://cevizh11-menuplanung.firebaseio.com"
-});
+if (prod) {
+    const serviceAccount = require("../keys/cevizh11-menuplanung-firebase-adminsdk-woa27-e2e122f8d6.json");
+
+    // connect to firebase firestore database
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        databaseURL: "https://cevizh11-menuplanung.firebaseio.com"
+    });
+}
+else {
+    const serviceAccount = require("../keys/cevizh11-firebase-adminsdk-hz6mk-4c71d5140a.json");
+
+    // connect to firebase firestore database
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        databaseURL: "https://cevizh11.firebaseio.com"
+    });
+
+}
 
 export const db = admin.firestore();
 
