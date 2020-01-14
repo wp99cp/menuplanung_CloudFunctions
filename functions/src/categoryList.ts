@@ -3,117 +3,152 @@ export const categoryList = {
 
     'Backwahren': [
         'Brot', 'Zopf', 'Chrustenkrank', 'Rauchbrot', 'Ruchbrot', 'Weissbrot', 'Silserkranz', 'Olivenbrot', 'Tessinerbrot', 'Nussbrot',
-        'Mehl', 'Weissmehl', 'Dinkelmehl',
+        'Mehl', 'Weissmehl', 'Dinkelmehl', 'Dinkel',
         'Puderzucker', 'Vanillezucker',
         'Guetlsi', 'Petit Beurre',
-        'Mandeln'
+        'Mandeln',
+        'Hefe', 'Maisstärke', 'Blätterteig',
+        'Backaroma', 'Pastete', 'Pasteten', 'Pastetli',
+        'Paniermehl'
     ],
 
     'Fleisch & Fisch': [
         'Fleisch',
+        'Bündner Rohschinken', 'Rohschinken',
         'Hackfleisch', 'Schweis-Geschnetzeltes', 'Geschnetzeltes', 'Gechnätzeltes', 'Schweins geschnetzeltes', 'Kalbs-Geschnetzeltes',
         'Filet', 'Braten',
         'Speck', 'Bratspeck', 'Schinkenwürfelchen',
         'Poulet', 'Poulet ganz', 'Poulet-Schenkel', 'Poulet Geschnetzeltes',
         'Schweinshalsbraten',
-        'Kalbfleisch'
+        'Kalbfleisch',
+        'Bratwurst',
+        'Ente',
+        'Fischstäbchen', 'Fisch', 'Lachs',
+        'Gulasch',
+        'Lammfleisch', 'Rindfleisch', 'Geflügel', 'Schwein', 'Kalbfleisch',
+        'Schinkli',
+        'Salami'
     ],
 
     'Konserven': [
         'Dosen Ananas',
         'Dosen pfirsich',
         'Tomatenpüree', 'Pelatti',
-        'Stalden Crème', 'Apfelmus', 'Ananasscheiben'
+        'Stalden Crème', 'Apfelmus', 'Ananasscheiben',
+        'Rotkraut', 'Sauerkraut',
+        'Essiggurke', 'Peso'
     ],
 
     'Brotaufstrich': [
-        'Honig', 'Nutella', 'Konfitüre', 'Ovomaltine', 'Konfiture'
+        'Honig', 'Nutella', 'Konfitüre', 'Ovomaltine', 'Konfiture',
+        'Johannisbeergelee'
     ],
 
     'Grundnahrungsmittel': [
         'Reis', 'Basmatireis', 'Risotto', 'Langkornreis', 'Vollreis', 'Parfümreis', 'Jasminreis', 'Wildreis',
         'Zucker',
         'Mehl', 'Halbweissmehl', 'Dinkelmehl', 'Zopfmehl', 'Buchweizenmehl', 'Bauernmehl', 'Mehrkornmehl',
-        'Teigwaren', 'Spaghetti', 'Tagliatelle', 'Penne', 'Fusilli', 'Lasagneblätter', 'Maccheroni', 'Tortiglioni', 'Hörndli', 'Nudeln',
+        'Teigwaren', 'Spaghetti', 'Lasagneblätter', 'Maccheroni', 'Tortiglioni', 'Hörndli', 'Nudeln',
+        'Cannelloni', 'Capellini', 'Farfalle', 'Fettuccine', 'Penne', 'Fusilli', 'Tagliatelle', 'Lasagne', 'Maccheroni', 'Orecchiette',
+        'Paccheri', 'Pappardelle', 'Ravioli', 'Rigatoni', 'Spaghettini', 'Tortellini', 'Tortelloni',
         'Rollgersten', 'Polenta', 'Couscous', 'Quinoa',
-        'Linsen', 'Kichererbsen', 'Bonen', 'Grüne Linsen', 'Rote Linsen', 'Hartweizengriess',
+        'Linsen', 'Kichererbsen', 'Bonen', 'Grüne Linsen', 'Rote Linsen', 'Hartweizengriess', 'Linse',
         'Pinienkrene', 'Leinsamen', 'Sesan',
-        'Rösti'
+        'Rösti',
+        'Roggen'
 
     ],
 
     'Milchprodukte und Eier': [
-        'Milch', 'Vollmilch',
-        'Käse', 'Reibkäse', 'Parmesan', 'Sbrinz',
+        'Milch', 'Vollmilch', 'Sauermilch',
+        'Käse', 'Reibkäse', 'Parmesan', 'Sbrinz', 'Mozerella',
         'Butter', 'Anke', 'Margarine', 'Kochbutter', 'Butter, weich',
-        'Rahm', 'Vollrahm', 'Halbrahm', 'saurer Halbrahm',
+        'Rahm', 'Vollrahm', 'Halbrahm', 'saurer Halbrahm', 'Schlagrahm',
         'Ei', 'Eier', 'Eigelb', 'Eiweiss',
         'Jogurt', 'Nature Jogurt', 'Naturejogurt',
         'Quark', 'Mascarpone', 'Rahmquark',
-        'Bratbutter'
+        'Bratbutter',
+        'Bergkäse', 'Chester',
+        'Crème fraîche'
     ],
 
     'Gewürze': [
-        'Curry',
+        'Curry', 'Chili', 'Chilipulver',
         'Pfeffer',
         'Salz',
-        'Loorbeerbläter',
-        'Chilipulver',
+        'Loorbeerbläter', 'Lorbeerblatt',
+        'Chilipulver', 'Muskatnuss',
+        'Nelken',
         'Garam Masala',
         'Kreuzkümmelsamen',
+        'Kreuzkümmel',
         'Kurkuma',
         'Fenchelsamen',
-        'Petersilie', 'gehackte Petersilie'
+        'Petersilie', 'gehackte Petersilie',
+        'Gemüsebouillon',
+        'Salz, Pfeffer', 'Pfeffer, Salz',
+        'Basilikum', 'Schnittlauch',
+        'Thymian',
+        'Senf', 'Mayonnaise', 'Ketchup'
     ],
 
     'Früchte und Gemüse': [
+        'Limette', 'Limetten',
+        'Clementinen',
+        'Chicorée',
         'Äpfel', 'Apfel', 'Gala',
         'Birne', 'Birnen',
+        'Nektarinen',
         'Trauben',
         'Beeren', 'Himbeeren', 'Heidelbeeren', 'Pflaumen',
-        'Kiwi', 'Ananas', 'Mango', 'Ingwer', 'Zitrone', 'Orange',
+        'Kiwi', 'Ananas', 'Mango', 'Ingwer', 'Zitrone', 'Orange', 'Avocado', 'Maniok',
         'Bananen',
         'Karotten', 'Rüebli',
-        'Blumenkohl',
         'Kartoffeln', 'Kartoffeln festkochend', 'Kartoffeln mehligkochend', 'mehlig kochende Kartoffeln',
-        'Knoblauch', 'Knoblauchzehen', 'Zwiebel',
+        'geschwellte Kartoffeln',
+        'Knoblauch', 'Knoblauchzehen', 'Knoblauchzehe', 'Zwiebel',
         'Frucht', 'Früchte',
         'Saisongemüse',
-        'Blumenkohl', 'Broccoli', 'Wirz', 'Weisskabis', 'Rotkabis', 'Palmkohl', 'Kabis', 'Federkohl',
+        'Sojabohnen', 'Soja',
+        'Blumenkohl', 'Broccoli', 'Wirz', 'Weisskabis', 'Rotkabis', 'Palmkohl', 'Kabis', 'Federkohl', 'Kohl',
         'Aubergine', 'Zucchetti', 'Peperoni',
         'Bohnen', 'Mais',
         'Spargeln',
         'Fenchel',
         'Lauch',
-        'Pilze', 'Champignons', 'Eierschwämmli',
+        'Pilz', 'Pilze', 'Champignons', 'Eierschwämmli',
         'Kürbis', 'Erdnüsse',
-        'Spinat',
-        'Salat', 'Rucola',
-        'Tomaten',
-        'Zitronenschale'
+        'Spinat', 'Blattspinat',
+        'Salat', 'Rucola', 'Ruccola', 'Blattsalat',
+        'Tomate', 'Tomaten',
+        'Zitronenschale',
+        'Rotkabis', 'Sellerie',
+        'Erbse', 'Feige',
+        'Gurke',
+        'Melone'
     ],
 
     'Süsses und Snacks': [
-        'Schoggi',
-        'Schockolade',
+        'Schoggi', 'Kekse',
+        'Schockolade', 'Bitterschokolade',
         'Chips', 'Paprika Chips', 'Nature Chips', 'Pringels',
         'Farmer', 'Balisto',
-        'Kägifret'
+        'Kägifret', 'Kakaopulver', 'Schoggipulver'
     ],
 
     'Non-Food': [
-        'WC-Papier',
+        'WC-Papier', 'Zahnstocher',
         'Alufolie', 'Backpapier', 'Frischhaltefolie',
         'Abwaschmittel', 'Schwamm', 'Abwaschbürste',
-        'Kerichtsack', 'Züri-Sack'
+        'Abfallsack', 'Kerichtsack', 'Züri-Sack'
     ],
 
     'Getränke & Wein': [
-        'Weisswein', 'Rotwein', 'Kochwein'
+        'Weisswein', 'Rotwein', 'Kochwein', 'Birnendicksaft'
     ],
 
     'Essig & Öl': [
-        'Essig', 'Balsamico',
+        'Essig', 'Balsamico', 'Balsamessig', 'Apfelessig',
         'Öl', 'Olivenöl', 'Sonnenblumenöl', 'Rapsöl', 'Frittieröl', 'Distelöl'
     ],
 
