@@ -32,11 +32,12 @@ export const categoryList = {
 
     'Konserven': [
         'Dosen Ananas',
-        'Dosen pfirsich',
+        'Dosen Pfirsich',
         'Tomatenpüree', 'Pelatti',
         'Stalden Crème', 'Apfelmus', 'Ananasscheiben',
         'Rotkraut', 'Sauerkraut',
-        'Essiggurke', 'Peso'
+        'Essiggurke', 'Peso',
+        'kondensmilch'
     ],
 
     'Brotaufstrich': [
