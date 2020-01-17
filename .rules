@@ -45,7 +45,7 @@ service cloud.firestore {
         function validChanges(){
 
             return
-                request.resource.data.displayName.size() > 3 &&
+                request.resource.data.displayName is string &&
                 // can't change it's email
                 request.resource.data.email == resource.data.email &&
                 // can't change it's own uid
@@ -58,7 +58,7 @@ service cloud.firestore {
 
         // A user only can edit it's own user document
         // He can only change it's displayed name and the visibility-properity
-        allow update: if resource.data.uid == request.auth.uid && validChanges();
+        allow update: if userID == request.auth.uid && validChanges();
 
         // all visible user can be listed if the requesting user is signed in
         allow list, get: if (resource.data.visibility == 'visible' || userID == request.auth.uid) && isAuth();
