@@ -4,9 +4,12 @@ import { createCampExportData, createShoppingListData, createMealsInfoData } fro
 import { deleteCamp, changesInSpecificMeal } from './changesInDatabase';
 import * as  admin from 'firebase-admin';
 
-// Use to set correct projectId and serviceAccount
-const prod = false;
+// Use to set correct projectId and serviceAccount for the database
+// the correct one is automaticaly set by the GClOUD_PROJECT name.
+// prod == 'cevizh11-menuplanung' or def == 'cevizh11'
+const prod = process.env.GCLOUD_PROJECT === 'cevizh11-menuplanung';
 
+// für den produktiven Einsatz
 if (prod) {
     const serviceAccount = require("../keys/cevizh11-menuplanung-firebase-adminsdk-woa27-e2e122f8d6.json");
 
@@ -16,6 +19,8 @@ if (prod) {
         databaseURL: "https://cevizh11-menuplanung.firebaseio.com"
     });
 }
+
+// für die Entwicklung
 else {
     const serviceAccount = require("../keys/cevizh11-firebase-adminsdk-hz6mk-4c71d5140a.json");
 
@@ -81,11 +86,6 @@ const cloudFunction = () => {
 
 exports.getMealsInfoExport = createCallableCloudFunc(createMealsInfoData);
 
-
-// TODO: diese Funktion funktioniert so nicht!! 
-// Idee: Nutzer bei seiner ersten Anmelding frage, ob sein Konto öffentlich sein soll
-// oder nicht... Namen angeben --> Dokument erstellen
-// --> wenn so umgesetzt diese Funktion ggf. löschen...
 exports.newUserCreated = cloudFunction().auth.user().onCreate((user) => {
 
     db.collection('users').doc(user.uid)
