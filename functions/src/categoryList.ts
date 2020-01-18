@@ -14,7 +14,7 @@ export const categoryList = {
 
     'Fleisch & Fisch': [
         'Fleisch',
-        'Bündner Rohschinken', 'Rohschinken',
+        'Bündner Rohschinken', 'Rohschinken', 'Schinken',
         'Hackfleisch', 'Schweis-Geschnetzeltes', 'Geschnetzeltes', 'Gechnätzeltes', 'Schweins geschnetzeltes', 'Kalbs-Geschnetzeltes',
         'Filet', 'Braten',
         'Speck', 'Bratspeck', 'Schinkenwürfelchen',
@@ -27,21 +27,21 @@ export const categoryList = {
         'Gulasch',
         'Lammfleisch', 'Rindfleisch', 'Geflügel', 'Schwein', 'Kalbfleisch',
         'Schinkli',
-        'Salami'
+        'Salami', 'gehacktes Rind'
     ],
 
     'Konserven': [
         'Dosen Ananas',
         'Dosen Pfirsich',
-        'Tomatenpüree', 'Pelatti',
-        'Stalden Crème', 'Apfelmus', 'Ananasscheiben',
+        'Tomatenpüree', 'Pelatti', 'Pelati',
+        'Stalden Crème', 'Apfelmus', 'Apfelmuss', 'Ananasscheiben',
         'Rotkraut', 'Sauerkraut',
         'Essiggurke', 'Peso',
         'kondensmilch'
     ],
 
     'Brotaufstrich': [
-        'Honig', 'Nutella', 'Konfitüre', 'Ovomaltine', 'Konfiture',
+        'Honig', 'Nutella', 'Konfitüre', 'Ovomaltine', 'Konfiture', 'Konfi',
         'Johannisbeergelee'
     ],
 
@@ -56,7 +56,8 @@ export const categoryList = {
         'Linsen', 'Kichererbsen', 'Bonen', 'Grüne Linsen', 'Rote Linsen', 'Hartweizengriess', 'Linse',
         'Pinienkrene', 'Leinsamen', 'Sesan',
         'Rösti',
-        'Roggen'
+        'Roggen',
+        'Stocki'
 
     ],
 
@@ -76,6 +77,7 @@ export const categoryList = {
     'Gewürze': [
         'Curry', 'Chili', 'Chilipulver',
         'Pfeffer',
+        'Gelbe Currypaste',
         'Salz',
         'Loorbeerbläter', 'Lorbeerblatt',
         'Chilipulver', 'Muskatnuss',
@@ -86,7 +88,7 @@ export const categoryList = {
         'Kurkuma',
         'Fenchelsamen',
         'Petersilie', 'gehackte Petersilie',
-        'Gemüsebouillon',
+        'Gemüsebouillon', 'Bouillon',
         'Salz, Pfeffer', 'Pfeffer, Salz',
         'Basilikum', 'Schnittlauch',
         'Thymian',
@@ -97,6 +99,7 @@ export const categoryList = {
         'Limette', 'Limetten',
         'Clementinen',
         'Chicorée',
+        'Frühlingszwiebeln',
         'Äpfel', 'Apfel', 'Gala',
         'Birne', 'Birnen',
         'Nektarinen',
@@ -104,14 +107,14 @@ export const categoryList = {
         'Beeren', 'Himbeeren', 'Heidelbeeren', 'Pflaumen',
         'Kiwi', 'Ananas', 'Mango', 'Ingwer', 'Zitrone', 'Orange', 'Avocado', 'Maniok',
         'Bananen',
-        'Karotten', 'Rüebli',
+        'Karotten', 'Rüebli', 'Karotte',
         'Kartoffeln', 'Kartoffeln festkochend', 'Kartoffeln mehligkochend', 'mehlig kochende Kartoffeln',
         'geschwellte Kartoffeln',
         'Knoblauch', 'Knoblauchzehen', 'Knoblauchzehe', 'Zwiebel',
         'Frucht', 'Früchte',
         'Saisongemüse',
         'Sojabohnen', 'Soja',
-        'Blumenkohl', 'Broccoli', 'Wirz', 'Weisskabis', 'Rotkabis', 'Palmkohl', 'Kabis', 'Federkohl', 'Kohl',
+        'Blumenkohl', 'Broccoli', 'Brokkoli', 'Wirz', 'Weisskabis', 'Rotkabis', 'Palmkohl', 'Kabis', 'Federkohl', 'Kohl',
         'Aubergine', 'Zucchetti', 'Peperoni',
         'Bohnen', 'Mais',
         'Spargeln',
@@ -145,12 +148,12 @@ export const categoryList = {
     ],
 
     'Getränke & Wein': [
-        'Weisswein', 'Rotwein', 'Kochwein', 'Birnendicksaft'
+        'Weisswein', 'Rotwein', 'Kochwein', 'Birnendicksaft', 'Barolo'
     ],
 
     'Essig & Öl': [
         'Essig', 'Balsamico', 'Balsamessig', 'Apfelessig',
-        'Öl', 'Olivenöl', 'Sonnenblumenöl', 'Rapsöl', 'Frittieröl', 'Distelöl'
+        'Öl', 'Olivenöl', 'Sonnenblumenöl', 'Rapsöl', 'Frittieröl', 'Distelöl', 'Bratöl'
     ],
 
     'muss ggf. nicht gekauft werden': [

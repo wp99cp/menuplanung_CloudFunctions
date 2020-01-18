@@ -59,9 +59,13 @@ const unitLookUp: UnitLookUpTable = {
   Sack: { factor: 1, baseUnit: 'Sack' },
   Zwg: { factor: 1, baseUnit: 'Zweig' },
   Zweig: { factor: 1, baseUnit: 'Zweig' },
+  Bund: { factor: 1, baseUnit: 'Bund' },
   'Msp.': { factor: 1, baseUnit: 'Msp.' },
   'Messerspitze': { factor: 1, baseUnit: 'Msp.' },
-  'Blatt': { factor: 1, baseUnit: 'Blatt' },
+  Prise: { factor: 1, baseUnit: 'Prise' },
+  'Blätter': { factor: 1, baseUnit: 'Blätter' },
+  'Blatt': { factor: 1, baseUnit: 'Blätter' },
+  Stengel: { factor: 1, baseUnit: 'Stengel' }
 
 };
 
