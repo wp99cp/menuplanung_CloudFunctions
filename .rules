@@ -93,7 +93,7 @@ service cloud.firestore {
 
         allow update: if hasAccess() && checkAccessChanges() && validChanges();
         allow list, get: if hasAccess();
-        allow delete: if isOwner();
+        allow delete: if isOwner(resource.data);
 
     }
  

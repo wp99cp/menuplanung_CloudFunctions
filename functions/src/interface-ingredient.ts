@@ -1,5 +1,6 @@
 export interface Ingredient {
     measure: number;
     unit: string;
-    food: string
+    food: string;
+    comment: string;
 }

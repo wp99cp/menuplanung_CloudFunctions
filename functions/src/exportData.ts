@@ -166,19 +166,89 @@ function addToShoppingList(shoppingList: ShoppingList, ingredient: Ingredient, p
 
 
 /**
+ * exportiert die Mahlzeiten für den Druck des Lagerdossies
  * 
  */
-export async function createMealsInfoData(): Promise<ResponseData> {
-    return await {
-        data: [{
-            name: 'Zmittag',
-            meal: 'Hörndli und Ghacktes',
-            date: 'Mittwoch, 30. November 2019',
-            recipes: [
-                {
-                    name: 'Hörndli und Ghacktes'
-                }
-            ]
-        }]
-    };
+export async function createMealsInfoData(requestData: any): Promise<ResponseData> {
+
+    interface Recipe { description: string, ingredients: Ingredient[], participants: number, vegi: 'all' | 'vegiOnly' | 'nonVegi' };
+    interface Meal { description: string, firestoreElementId: string, name: string, specificId: string, recipes: Recipe[], participants: number, usedAs: string, date: any };
+    interface SpecificMeal { overrideParticipants: boolean, participants: number };
+    interface SpecificRecipe { overrideParticipants: boolean, participants: number, vegi: 'all' | 'vegiOnly' | 'nonVegi' };
+    interface Day { date: any, meals: Meal[] }
+    interface Camp { days: Day[], participants: number, vegetarier: number };
+
+    // undefined campId
+    const campId: string = requestData.campId;
+    if (campId === undefined)
+        throw new InvalidDocumentPath('undefined campId');
+
+    // load the participants form the current camp
+    const campData = (await db.doc('camps/' + campId).get()).data() as Camp;
+    if (campData === undefined)
+        throw new Error('camp not found');
+
+    const meals: Meal[] = [];
+
+    await Promise.all(campData.days.map(async (day: Day) => {
+        return Promise.all(day.meals.map(async (meal: Meal) => {
+            return addMealToList(meal, day);
+        }));
+    }));
+
+    return { data: meals };
+
+    async function addMealToList(meal: Meal, day: Day) {
+
+        meal.usedAs = meal.name;
+        meal.name = meal.description;
+        meal.participants = campData.participants;
+        meal.date = day.date;
+
+        // ladet die Mahlzeit
+        const loadedMeal = (await db.doc('meals/' + meal.firestoreElementId).get()).data() as Meal;
+        meal.description = loadedMeal.description;
+
+        // lader specifische Mahlzeit
+        const loadedSpecificMeal = (await db.doc('meals/' + meal.firestoreElementId + '/specificMeals/' + meal.specificId).get()).data() as SpecificMeal;
+        if (loadedSpecificMeal.overrideParticipants) {
+            meal.participants = loadedSpecificMeal.participants;
+        }
+
+        // load recipes
+        meal.recipes = [];
+        await Promise.all((await db.collection('meals/' + meal.firestoreElementId + '/recipes').get()).docs.map(async (recipesRef) => {
+
+            const recipe = recipesRef.data() as Recipe;
+
+            // lader specifische Mahlzeit
+            const loadedSpecificRecipe = (await db.doc('meals/' + meal.firestoreElementId + '/recipes/' + recipesRef.id + '/specificRecipes/' + meal.specificId).get()).data() as SpecificRecipe;
+            recipe.vegi = loadedSpecificRecipe.vegi;
+
+            // TODO: extract to shared code!!!!
+            if (loadedSpecificRecipe.overrideParticipants) {
+                recipe.participants = loadedSpecificRecipe.participants;
+            } else {
+                recipe.participants = meal.participants;
+            }
+
+            if (recipe.vegi === 'vegiOnly') {
+                recipe.participants = campData.vegetarier;
+            }
+            else if (recipe.vegi === 'nonVegi') {
+                recipe.participants = recipe.participants - campData.vegetarier;
+            }
+
+            meal.recipes.push(recipe);
+
+            return;
+
+        }));
+
+        // fügt Mahlzeit zur Liste hinzu
+        meals.push(meal);
+
+        return;
+
+    }
 }
