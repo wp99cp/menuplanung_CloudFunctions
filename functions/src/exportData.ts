@@ -1,11 +1,25 @@
-import { ResponseData } from "./interface-responseData";
-import { ShoppingList, UnitMismatchingError } from "./interface-ShoppingList";
-import { Ingredient } from "./interface-ingredient";
-import { categoryList } from "./categoryList";
-import { db } from "./index";
-import { UnitConvertionError } from "./unitLookUpTable";
+import { db } from '.';
+import * as categoryList from './data/foodCategory.json';
+import { Ingredient } from './interface-ingredient';
+import { ResponseData } from './interface-responseData';
+import { ShoppingList, UnitMismatchingError } from './interface-ShoppingList';
+import { UnitConvertionError } from './unitLookUpTable';
 
 export class InvalidDocumentPath extends Error { }
+
+// expotes the campInfos
+export async function exportCampData(requestData: any): Promise<ResponseData> {
+
+    return {
+        data: {
+            mealsInfo: await createMealsInfoData(requestData),
+            campData: await createCampExportData(requestData),
+            shoppingList: await createShoppingListData(requestData)
+        }
+    };
+
+}
+
 
 
 // TODO: erweitern der Export Ansicht: Wochenplan, Rezepte inkl. Mengenangeben usw.
@@ -18,7 +32,7 @@ export class InvalidDocumentPath extends Error { }
  * 
  * @param requestData 
  */
-export async function createCampExportData(requestData: any): Promise<ResponseData> {
+async function createCampExportData(requestData: any): Promise<any> {
 
     const campId = requestData.campId;
 
@@ -28,9 +42,7 @@ export async function createCampExportData(requestData: any): Promise<ResponseDa
     if (campData === undefined)
         throw new Error("Can't find camp");
 
-    return {
-        data: campData
-    };
+    return campData;
 
 };
 
@@ -47,7 +59,7 @@ export async function createCampExportData(requestData: any): Promise<ResponseDa
  * 4) add the recipe to the shoppingList and return it.
  * 
  */
-export async function createShoppingListData(requestData: any): Promise<ResponseData> {
+async function createShoppingListData(requestData: any): Promise<any> {
 
     // shoppingList object which get returned by the function
     const shoppingList: ShoppingList = new ShoppingList(categoryList);
@@ -80,12 +92,37 @@ export async function createShoppingListData(requestData: any): Promise<Response
 
     }
 
+
+    const shoppingListData = shoppingList.getList();
+
+    const arry: any = [];
+    for (const ing in shoppingListData) {
+        if (ing) {
+            if (!arry[shoppingListData[ing].category]) {
+                arry[shoppingListData[ing].category] = [];
+            }
+            arry[shoppingListData[ing].category].push({
+                food: ing,
+                measure: shoppingListData[ing].measure.toFixed(2),
+                unit: shoppingListData[ing].unit
+            });
+        }
+    }
+
+    const array = [];
+    for (const cat in arry) {
+        if (cat) {
+            array.push({
+                name: cat,
+                ingredients: arry[cat]
+            });
+        }
+    }
+
     // return the shoppingList and the errorLog to the customer
-    const returnData = {
-        data: shoppingList.getList(),
-        error: errorLogs
-    };
-    return returnData;
+    return { shoppingList: array, error: errorLogs };
+
+
 
 }
 
@@ -169,7 +206,7 @@ function addToShoppingList(shoppingList: ShoppingList, ingredient: Ingredient, p
  * exportiert die Mahlzeiten für den Druck des Lagerdossies
  * 
  */
-export async function createMealsInfoData(requestData: any): Promise<ResponseData> {
+async function createMealsInfoData(requestData: any): Promise<any> {
 
     interface Recipe { description: string, ingredients: Ingredient[], participants: number, vegi: 'all' | 'vegiOnly' | 'nonVegi' };
     interface Meal { description: string, firestoreElementId: string, name: string, specificId: string, recipes: Recipe[], participants: number, usedAs: string, date: any };
@@ -196,7 +233,7 @@ export async function createMealsInfoData(requestData: any): Promise<ResponseDat
         }));
     }));
 
-    return { data: meals };
+    return meals;
 
     async function addMealToList(meal: Meal, day: Day) {
 

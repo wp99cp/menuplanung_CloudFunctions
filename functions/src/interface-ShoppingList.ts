@@ -1,7 +1,7 @@
 import { toUnitMeasure as toBaseUnitMeasure } from "./unitLookUpTable";
 import { Ingredient } from "./interface-ingredient";
-import { db } from "./index";
 import admin = require("firebase-admin");
+import { db } from ".";
 
 /**
  * TODO: eigenes .ts file für dieses interface
