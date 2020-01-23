@@ -1,8 +1,9 @@
-import { ResponseData } from './interface-responseData';
 import admin = require('firebase-admin');
-import { projectId } from '.';
-import { contents } from './htmlContentLagerhandbuch';
+
+import { db, projectId } from '.';
+import { createHTML } from './createHTMLForExport';
 import { exportCampData } from './exportData';
+import { ResponseData } from './interface-responseData';
 
 /**
  * 
@@ -24,17 +25,20 @@ export async function createPDF(requestData: any): Promise<ResponseData> {
     const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
     const page = await browser.newPage();
 
-    // sets the content of the page loaded in the browser
-    await page.setContent(contents);
+    // loads the template html from the template folder
+    await page.goto('file://' + __dirname + '/templates/lagerhandbuch.html');
     // use print media for print css
     await page.emulateMedia("print");
 
     // Update the data from the template...
     const exportData = (await exportCampData(requestData)).data;
-    await page.evaluate(fillingInData, exportData);
+    await page.evaluate(createHTML, exportData);
 
     // generates the file path out of the campId a unique token
     const filePath = generatingFileName(requestData.campId);
+
+    // reads out the html content
+    await saveAsHTML(page, filePath);
 
     // saves the page as PDF
     await saveAsPDF(page, filePath, (err: any) => {
@@ -44,29 +48,46 @@ export async function createPDF(requestData: any): Promise<ResponseData> {
         }
     });
 
-    return { data: filePath };
+    return await (await writeToDocument(requestData.campId, filePath) as FirebaseFirestore.DocumentData).data();
 
 }
 
 /**
  * 
- * Filling in the data to the html page
+ * Writes the info about the export to the collection 'exports' of the
+ * camp with the given campId.
  * 
- * @param data exportedCamp Data
- * 
+ * @param campId Id of the exported camp 
+ * @param filePath unique file path to the exported files
  */
-const fillingInData = (data: any) => {
+async function writeToDocument(campId: string, filePath: string): Promise<FirebaseFirestore.DocumentSnapshot> {
 
-    let dom = document.querySelector('.val-camp-name') as Element;
-    dom.innerHTML = data.campData.name;
+    const exportInfos = {
+        path: filePath,
+        docs: ['pdf', 'html'],
+        exportDate: new Date(),
+        expiryDate: new Date(new Date().getTime() + (1000 * 60 * 60 * 24 * 30))
+    };
 
-    dom = document.querySelector('.val-current-date') as Element;
-    dom.innerHTML = 'Version vom ' + new Date().toLocaleDateString('de-CH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const docRef = await db.collection('camps/' + campId + '/exports/').add(exportInfos);
+    return docRef.get();
+}
 
-    dom = document.querySelector('.val-description') as Element;
-    dom.innerHTML = data.campData.description;
+/**
+ * Saves the html content of the current Page as HTML
+ * 
+ * @param page currentPage
+ * @param filePath pathe where the file should get saved
+ */
+async function saveAsHTML(page: any, filePath: string) {
 
-};
+    const html = await page.evaluate(() => { return (document.body.parentElement as HTMLElement).innerHTML; });
+    const cloudStorage = admin.storage().bucket(projectId + '.appspot.com');
+    const pdfFile = cloudStorage.file(filePath + '.html');
+    const fileMetadata = { contentType: 'application/html' };
+    pdfFile.save(html, fileMetadata, (err) => { console.log(err); });
+
+}
 
 /**
  * creates the unique fileName
@@ -79,7 +100,7 @@ function generatingFileName(campId: string) {
 
     const campName = campId;
     const exportToken = (Date.now().toString(36) + Math.random().toString(36).substr(2, 5)).toUpperCase();
-    return 'eMeal-export/' + campName + '_' + exportToken + '.pdf';
+    return 'eMeal-export/' + campName + '_' + exportToken;
 
 }
 
@@ -107,7 +128,7 @@ async function saveAsPDF(page: any, filePath: string, callback: any) {
     const pdfBuffer = await page.pdf(printOptions);
 
     // saves the file in the cloudStorage
-    const pdfFile = cloudStorage.file(filePath);
+    const pdfFile = cloudStorage.file(filePath + '.pdf');
     const fileMetadata = { contentType: 'application/pdf' };
     pdfFile.save(pdfBuffer, fileMetadata, callback);
 

@@ -7,32 +7,168 @@ import { UnitConvertionError } from './unitLookUpTable';
 
 export class InvalidDocumentPath extends Error { }
 
-// expotes the campInfos
-export async function exportCampData(requestData: any): Promise<ResponseData> {
 
+/**
+ * Data Format for exporting a camp.
+ * This data format is used in the exportCampData function
+ * 
+ */
+interface ExportedCamp extends ResponseData {
+    data: { mealsInfo: any; campData: any; shoppingList: any; weekView: any; }
+}
+
+/**
+ * 
+ * Exports all infos for a camp. This function is called to export the camp as
+ * a "Lagerhandbuch". It contains all the data about a camp and could also be used
+ * to export and re-import a camp to the database (not yet implemented).
+ * 
+ * @param requestData contains the infos about the camp
+ * 
+ */
+export async function exportCampData(requestData: { campId: string }): Promise<ExportedCamp> {
+
+    // request different data as Promises
+    const mealInfo = createMealsInfoData(requestData);
+    const campData = createCampExportData(requestData);
+    const shoppingList = createShoppingListData(requestData);
+
+    // await all data (Promises to resolve)
+    await Promise.all([mealInfo, campData, shoppingList]);
+
+    // creates and return the ExportedCamp object
     return {
         data: {
-            mealsInfo: await createMealsInfoData(requestData),
-            campData: await createCampExportData(requestData),
-            shoppingList: await createShoppingListData(requestData)
+            mealsInfo: await mealInfo,
+            campData: await campData,
+            shoppingList: await shoppingList,
+            weekView: toWeekView(campData)
         }
-    };
+    }
+}
+
+/**
+ * 
+ * Transforms the campData to a Dataformat for creating the weekView
+ * 
+ * 
+ * @param campData 
+ */
+function toWeekView(campData: any) {
+
+    try {
+
+        return { weekView: transformToWeekTable(campData), error: '' };
+
+    } catch (error) {
+
+        return { weekView: null, error: error.message };
+    }
+
+}
+
+interface HashTable { [key: string]: string[]; }
+function transformToWeekTable(campInfo: any) {
+
+    const days = campInfo.days;
+
+    const tableHeaders: string[] = [];
+
+    let rows: HashTable = {};
+
+    days?.forEach((day: { date: any; meals: [{ name: string; description: string; }]; }) => {
+
+        // converts datum to local date string
+        tableHeaders.push((new Date(day.date._seconds * 1000))
+            .toLocaleDateString('de-CH', { weekday: 'long', year: 'numeric', month: 'short', day: '2-digit' }));
+
+        // sort meals, if they aren't undefined
+        if (day.meals !== undefined) {
+
+            day.meals.sort((a, b) => a.name.localeCompare(b.name));
+        }
+
+        // add meals of day
+        day.meals.forEach(meal => {
+
+
+            if (rows[meal.name] === undefined) {
+
+                rows[meal.name] = [];
+                for (let i = 0; i < tableHeaders.length - 1; i++) {
+                    rows[meal.name].push('-');
+                }
+
+
+            } else if (rows[meal.name].length === tableHeaders.length) {
+
+                // dublicate meals on one day aren't supported yet
+                // throws an error and stops weekView creation
+                throw new Error('Dublicate meal on a one day!');
+            }
+
+            rows[meal.name].push(meal.description);
+
+        });
+
+        // add empty
+        for (const key in rows) {
+            if (rows[key].length < tableHeaders.length) {
+                rows[key].push('-');
+            }
+        }
+
+    });
+
+    rows = sortList(rows);
+
+    const newRows = [];
+    const rowTitles = [];
+
+    for (const key in rows) {
+        if (key) {
+            newRows.push(rows[key]);
+            rowTitles.push(key);
+        }
+    }
+
+    return { tableHeaders, rowEntries: newRows, rowTitles };
+
+}
+
+/**
+   * Sortiert die Mahlzeiten in der richtigen Reihenfolge (Zmorgen, Znüni, ...)
+   * und gibt das sortierte Object zurück.
+   *
+   * @param rows Zeilen der Tabelle
+   */
+function sortList(rows: HashTable): HashTable {
+
+    const rowsOrdered: any = {};
+
+    // Reihenfolge der Mahlzeiten
+    const orderOfMahlzeiten = ['Zmorgen', 'Znüni', 'Zmittag', 'Zvieri', 'Znacht', 'Leitersnack', 'Vorbereiten'];
+
+    // Sortiert das Objekt
+    Object.keys(rows)
+        .sort((a, b) => orderOfMahlzeiten.indexOf(a) - orderOfMahlzeiten.indexOf(b))
+        .forEach((key) => {
+            rowsOrdered[key] = rows[key];
+        });
+
+    return rowsOrdered;
 
 }
 
 
-
-// TODO: erweitern der Export Ansicht: Wochenplan, Rezepte inkl. Mengenangeben usw.
-// download der Einkaufsliste als CSV Dokument für die Weiterbearbeitung in z.B. Excel
-// settings zum Export, z.B. zu den Kategoriene (Ein-/ Ausbelden)
-// synched check-Boxes für Einkaufsliste... -> gemeinsames EInkaufen
-// PDF download nicht mehr nur über Chrome...
-
 /**
+ * Loads the document of the camp "camps/{campId}".
+ * Sorts the "camp.days" of the camp in the proper order (by date).
  * 
- * @param requestData 
+ * @param campData the content of the document of the camp
+ * 
  */
-async function createCampExportData(requestData: any): Promise<any> {
+async function createCampExportData(requestData: { campId: string }): Promise<any> {
 
     const campId = requestData.campId;
 
@@ -41,6 +177,10 @@ async function createCampExportData(requestData: any): Promise<any> {
 
     if (campData === undefined)
         throw new Error("Can't find camp");
+
+    // Sortiert die Tage nach dem Datum
+    interface WithDate { date: number; }
+    campData.days?.sort((a: WithDate, b: WithDate) => a.date - b.date);
 
     return campData;
 
@@ -131,7 +271,6 @@ async function addMealToShoppingList(specificMealDoc: FirebaseFirestore.QueryDoc
     // set the mealParticipants form specificMeal (if overrided) or form the campParticipants
     const mealParticipants = specificMealDoc.data().overrideParticipants ? specificMealDoc.data().participants : campData.participants;
 
-    console.log('Teilnehmerinnen Mahlzeit: ' + mealParticipants)
 
     // search for all specificRecipes with the given campId for the given specificMeal
     const refs = await db.collectionGroup('specificRecipes')
@@ -170,8 +309,6 @@ async function addRecipeToShoppingList(specificRecipeDoc: FirebaseFirestore.Quer
 
     }
 
-
-    console.log('Teilnehmerinnen Rezept: ' + participants)
 
     // load the ingredient data for the recipe (not form the specificRecipe)
     const data = (await db.doc(recipeRef).get()).data();

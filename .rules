@@ -95,6 +95,12 @@ service cloud.firestore {
         allow list, get: if hasAccess();
         allow delete: if isOwner(resource.data);
 
+        match /exports/{docID} {
+
+            allow read, list;
+            
+        }
+
     }
  
 
