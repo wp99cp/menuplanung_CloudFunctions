@@ -3,7 +3,7 @@ import * as categoryList from './data/foodCategory.json';
 import { Ingredient } from './interface-ingredient';
 import { ResponseData } from './interface-responseData';
 import { ShoppingList, UnitMismatchingError } from './interface-ShoppingList';
-import { UnitConvertionError } from './unitLookUpTable';
+import { UnitConvertionError } from './units';
 
 export class InvalidDocumentPath extends Error { }
 
@@ -136,6 +136,9 @@ function transformToWeekTable(campInfo: any) {
 
 }
 
+// Reihenfolge der Mahlzeiten
+const orderOfMahlzeiten = ['Zmorgen', 'Znüni', 'Zmittag', 'Zvieri', 'Znacht', 'Leitersnack', 'Vorbereiten'];
+
 /**
    * Sortiert die Mahlzeiten in der richtigen Reihenfolge (Zmorgen, Znüni, ...)
    * und gibt das sortierte Object zurück.
@@ -146,8 +149,7 @@ function sortList(rows: HashTable): HashTable {
 
     const rowsOrdered: any = {};
 
-    // Reihenfolge der Mahlzeiten
-    const orderOfMahlzeiten = ['Zmorgen', 'Znüni', 'Zmittag', 'Zvieri', 'Znacht', 'Leitersnack', 'Vorbereiten'];
+
 
     // Sortiert das Objekt
     Object.keys(rows)
@@ -339,18 +341,21 @@ function addToShoppingList(shoppingList: ShoppingList, ingredient: Ingredient, p
 }
 
 
+interface Recipe { description: string, ingredients: Ingredient[], participants: number, vegi: 'all' | 'vegiOnly' | 'nonVegi' };
+interface Meal { description: string, firestoreElementId: string, name: string, specificId: string, recipes: Recipe[], participants: number, usedAs: string, date: any };
+interface SpecificMeal { overrideParticipants: boolean, participants: number };
+interface SpecificRecipe { overrideParticipants: boolean, participants: number, vegi: 'all' | 'vegiOnly' | 'nonVegi' };
+interface Day { date: any, meals: Meal[] }
+interface Camp { days: Day[], participants: number, vegetarier: number };
+
 /**
- * exportiert die Mahlzeiten für den Druck des Lagerdossies
+ * Exportes the meals for the "Lagerhandbuch".
+ * 
+ * Collects all the meal data includes the recipes for
+ * the given camp. And sorts t
  * 
  */
 async function createMealsInfoData(requestData: any): Promise<any> {
-
-    interface Recipe { description: string, ingredients: Ingredient[], participants: number, vegi: 'all' | 'vegiOnly' | 'nonVegi' };
-    interface Meal { description: string, firestoreElementId: string, name: string, specificId: string, recipes: Recipe[], participants: number, usedAs: string, date: any };
-    interface SpecificMeal { overrideParticipants: boolean, participants: number };
-    interface SpecificRecipe { overrideParticipants: boolean, participants: number, vegi: 'all' | 'vegiOnly' | 'nonVegi' };
-    interface Day { date: any, meals: Meal[] }
-    interface Camp { days: Day[], participants: number, vegetarier: number };
 
     // undefined campId
     const campId: string = requestData.campId;
@@ -366,63 +371,93 @@ async function createMealsInfoData(requestData: any): Promise<any> {
 
     await Promise.all(campData.days.map(async (day: Day) => {
         return Promise.all(day.meals.map(async (meal: Meal) => {
-            return addMealToList(meal, day);
+            return addMealToList(campData, meal, day, meals);
         }));
     }));
 
+    // sortiert die Mahlzeiten
+    sortMeals(meals);
     return meals;
 
-    async function addMealToList(meal: Meal, day: Day) {
 
-        meal.usedAs = meal.name;
-        meal.name = meal.description;
-        meal.participants = campData.participants;
-        meal.date = day.date;
+}
 
-        // ladet die Mahlzeit
-        const loadedMeal = (await db.doc('meals/' + meal.firestoreElementId).get()).data() as Meal;
-        meal.description = loadedMeal.description;
+async function addMealToList(campData: any, meal: Meal, day: Day, meals: Meal[]) {
+
+    meal.usedAs = meal.name;
+    meal.name = meal.description;
+    meal.participants = campData.participants;
+    meal.date = day.date;
+
+    // ladet die Mahlzeit
+    const loadedMeal = (await db.doc('meals/' + meal.firestoreElementId).get()).data() as Meal;
+    meal.description = loadedMeal.description;
+
+    // lader specifische Mahlzeit
+    const loadedSpecificMeal = (await db.doc('meals/' + meal.firestoreElementId + '/specificMeals/' + meal.specificId).get()).data() as SpecificMeal;
+    if (loadedSpecificMeal.overrideParticipants) {
+        meal.participants = loadedSpecificMeal.participants;
+    }
+
+    // load recipes
+    meal.recipes = [];
+    await Promise.all((await db.collection('meals/' + meal.firestoreElementId + '/recipes').get()).docs.map(async (recipesRef) => {
+
+        const recipe = recipesRef.data() as Recipe;
 
         // lader specifische Mahlzeit
-        const loadedSpecificMeal = (await db.doc('meals/' + meal.firestoreElementId + '/specificMeals/' + meal.specificId).get()).data() as SpecificMeal;
-        if (loadedSpecificMeal.overrideParticipants) {
-            meal.participants = loadedSpecificMeal.participants;
+        const loadedSpecificRecipe = (await db.doc('meals/' + meal.firestoreElementId + '/recipes/' + recipesRef.id + '/specificRecipes/' + meal.specificId).get()).data() as SpecificRecipe;
+        recipe.vegi = loadedSpecificRecipe.vegi;
+
+        // TODO: extract to shared code!!!!
+        if (loadedSpecificRecipe.overrideParticipants) {
+            recipe.participants = loadedSpecificRecipe.participants;
+        } else {
+            recipe.participants = meal.participants;
         }
 
-        // load recipes
-        meal.recipes = [];
-        await Promise.all((await db.collection('meals/' + meal.firestoreElementId + '/recipes').get()).docs.map(async (recipesRef) => {
+        if (recipe.vegi === 'vegiOnly') {
+            recipe.participants = campData.vegetarier;
+        }
+        else if (recipe.vegi === 'nonVegi') {
+            recipe.participants = recipe.participants - campData.vegetarier;
+        }
 
-            const recipe = recipesRef.data() as Recipe;
-
-            // lader specifische Mahlzeit
-            const loadedSpecificRecipe = (await db.doc('meals/' + meal.firestoreElementId + '/recipes/' + recipesRef.id + '/specificRecipes/' + meal.specificId).get()).data() as SpecificRecipe;
-            recipe.vegi = loadedSpecificRecipe.vegi;
-
-            // TODO: extract to shared code!!!!
-            if (loadedSpecificRecipe.overrideParticipants) {
-                recipe.participants = loadedSpecificRecipe.participants;
-            } else {
-                recipe.participants = meal.participants;
-            }
-
-            if (recipe.vegi === 'vegiOnly') {
-                recipe.participants = campData.vegetarier;
-            }
-            else if (recipe.vegi === 'nonVegi') {
-                recipe.participants = recipe.participants - campData.vegetarier;
-            }
-
-            meal.recipes.push(recipe);
-
-            return;
-
-        }));
-
-        // fügt Mahlzeit zur Liste hinzu
-        meals.push(meal);
+        meal.recipes.push(recipe);
 
         return;
 
-    }
+    }));
+
+    // fügt Mahlzeit zur Liste hinzu
+    meals.push(meal);
+
+    return;
+
 }
+
+/**
+ * 
+ * Sorts the meals by date and then by it's usedAs Value
+ * After this sorting the meals are in the proper order,
+ * i.e. the order in which they get cooked in the camp.
+ *     
+ * @param meals list of meals to sort
+ * 
+ */
+function sortMeals(meals: Meal[]) {
+
+    meals.sort((a, b) => {
+
+        if (a.date === b.date) {
+
+            // sortiert nach Verwendung
+            return orderOfMahlzeiten.indexOf(a.usedAs) - orderOfMahlzeiten.indexOf(b.usedAs);
+        }
+
+        // sortiert nach Datum
+        return a.date - b.date;
+    });
+
+}
+

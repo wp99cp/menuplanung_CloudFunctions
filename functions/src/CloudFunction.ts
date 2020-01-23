@@ -6,8 +6,6 @@ type FunctionMemory = "256MB" | "128MB" | "512MB" | "1GB" | "2GB" | undefined;
 
 /**
  *
- * TODO: export dieser Funktion in ein utils.ts document
- *
  * Creates a new https.onCall function with the basic settings
  *
  * Used region: 'europe-west1'
@@ -23,7 +21,8 @@ export const createCallableCloudFunc = (fkt: CloudFunction, memory?: FunctionMem
             return fkt(requestData);
         });
 };
-// TODO: export dieser Funktion in ein utils.ts document
+
+
 export const cloudFunction = (memory: FunctionMemory = '256MB') => {
     return functions
         // sets the region on which the cloud functions get exicuded.

@@ -1,6 +1,9 @@
 /**
  * 
- * Filling in the data to the html page
+ * Manipulates the HTML file "lagerhandbuch.html" to create a
+ * HTML document for printing the lagerhandbuch.
+ * 
+ * This function get exicuted in a browser environment in puppeteer.
  * 
  * @param data exportedCamp Data
  * 
@@ -20,7 +23,8 @@ export const createHTML = (data: any) => {
     dom = document.querySelector('.val-week-error') as Element;
     dom.innerHTML = data.weekView.error;
 
-
+    dom = document.querySelector('.val-week-view-table') as Element;
+    dom.innerHTML = `<p>Wochenübersicht zur Zeit nicht verfügbar!!!</p>`;
 
     // shoppingList
     const shoppingList = document.querySelector('.shopping-list') as Element;

@@ -1,4 +1,4 @@
-import { toUnitMeasure as toBaseUnitMeasure } from "./unitLookUpTable";
+import { toUnitMeasure as toBaseUnitMeasure } from "./units";
 import { Ingredient } from "./interface-ingredient";
 import admin = require("firebase-admin");
 import { db } from ".";
