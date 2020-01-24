@@ -76,7 +76,7 @@ export const createHTML = (data: any) => {
         newPage.innerHTML = `
             <h1 class="page-title meal-name">` + meal.name + `</h1>
             <span class="meal-description">` + meal.description + `</span>
-            <span class="meal-date">` + new Date(meal.date._seconds * 1000).toLocaleDateString('de-CH', { weekday: 'long', month: 'long', day: '2-digit' }) + `</span>
+            <span class="meal-date">` + new Date(meal.date).toLocaleDateString('de-CH', { weekday: 'long', month: 'long', day: '2-digit' }) + `</span>
             <span class="meal-usedAs">` + meal.usedAs + `</span>`;
 
         const recipesNode = document.createElement('div');

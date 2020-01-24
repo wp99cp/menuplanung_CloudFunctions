@@ -1,0 +1,261 @@
+<html>
+
+<head>
+    <style>
+        td.measure {
+            width: 2cm;
+            text-align: right;
+        }
+
+        td.unit {
+            width: 1.25cm;
+        }
+
+        tbody.category {
+            display: grid;
+            margin: 0.5cm 0;
+        }
+
+        table.shopping-list {
+            width: 100%;
+            column-count: 2;
+            display: block;
+        }
+
+        h1.page-title {
+            font-size: 28pt;
+        }
+
+        body {
+            margin: 0;
+            font-family: sans-serif;
+        }
+
+        h1.document-subtitle {
+            text-align: center;
+        }
+
+        h1.document-title {
+            text-align: center;
+            margin-top: 6cm;
+            font-size: 45pt;
+        }
+
+        span.document-version {
+            text-align: center;
+            width: 100%;
+        }
+
+        p.document-version {
+            text-align: center;
+            margin-top: 13cm;
+            color: gray;
+        }
+
+        page.page {
+            page-break-before: always;
+            overflow: hidden;
+            display: block;
+            height: 100vh;
+        }
+
+        span.disclamer {
+            font-size: 8pt;
+            color: gray;
+            max-width: 12cm;
+            display: block;
+            line-height: 12pt;
+            margin-top: 20cm;
+        }
+
+        article.page-landscape {
+            page-break-before: always;
+            overflow: hidden;
+            display: flex;
+            height: 18cm;
+            width: 26cm;
+            transform: rotate(90deg);
+            margin-top: 5cm;
+        }
+
+        article.page {
+            page-break-before: always;
+            overflow: hidden;
+            display: block;
+            font-size: 11pt;
+        }
+
+        ul.camp-info li {
+            margin: 0.15cm;
+        }
+
+        .recipes {
+            grid-area: recipes;
+            margin-top: 1.5cm;
+        }
+
+        span.meal-usedAs {
+            grid-area: usedAs;
+            font-size: 16pt;
+            text-align: right;
+            line-height: 25pt;
+            color: gray;
+            font-weight: bold;
+        }
+
+        span.meal-date {
+            grid-area: date;
+            font-size: 16pt;
+            margin-top: auto;
+            text-align: right;
+            line-height: 25pt;
+            color: gray;
+            font-weight: bold;
+        }
+
+        span.meal-description {
+            grid-area: description;
+        }
+
+        h1.page-title {
+            grid-area: name;
+            margin: 0;
+        }
+
+
+        article.meal-page {
+            display: grid;
+            grid-template-columns: 60% 40%;
+            grid-template-areas:
+                "name date"
+                "description usedAs"
+                "recipes recipes";
+        }
+
+        span.ingredient-measure {
+            width: 2cm;
+            display: inline-block;
+            text-align: right;
+            font-style: italic;
+            color: lightgrey;
+        }
+
+        span.ingredient-measure-calc {
+            width: 2cm;
+            display: inline-block;
+            text-align: right;
+        }
+
+        span.ingredient-unit {
+            width: 2cm;
+            display: inline-block;
+            text-align: left;
+        }
+
+        span.ingredient-food {
+            display: inline-block;
+            text-align: left;
+            width: auto;
+        }
+
+        .ingredient {
+            font-size: 11pt;
+        }
+
+        .recipe {
+            display: grid;
+            grid-template-columns: 60% 40%;
+            grid-template-areas:
+                "name participants"
+                "description null"
+                "ingredients ingredients"
+                "notes notes";
+            grid-row-gap: 0.5cm;
+            margin: 0 0 3cm 0;
+        }
+
+        h2.recipe-name {
+            grid-area: name;
+            margin-top: auto;
+            margin-bottom: 0;
+        }
+
+        span.recipe-description {
+            grid-area: description;
+        }
+
+        span.recipe-vegi-info {
+            grid-area: participants;
+            text-align: right;
+            margin-top: auto;
+        }
+
+        span.recipe-notes {
+            grid-area: notes;
+            max-width: 12cm;
+            line-height: 12pt;
+            font-size: 11pt;
+        }
+
+        .ingredients {
+            grid-area: ingredients;
+        }
+
+        .shoppinglist-error {
+
+            color: red;
+            font-size: 10pt;
+
+        }
+    </style>
+</head>
+
+
+<body>
+    <article class="page">
+        <h1 class="document-title val-camp-name">Sommerlager 2020</h1>
+        <h1 class="document-subtitle">Lagerhandbuch</h1>
+
+
+
+        <p class="document-version val-current-date">Version vom 23. August 2020</p>
+
+    </article>
+    <article class="page">
+        <h1 class="page-title">Allgemeines zum Lager</h1>
+        <ul class="camp-info">
+            <li><b>Beschreibung</b> <span class="val-description">Lorem Ipsi, set dolro et ajam najema.</span></li>
+
+            <li><b>Anzahl Teilnehmende:</b> <span class="val-participants">12</span> davon Vegetarier (<span
+                    class="val-vegos">2</span>)</li>
+            <li><b>Dauer:</b> <span class="val-dauer">11. August bis 22. September 2020</span></li>
+        </ul>
+
+        <span class="disclamer">Wir übernehmen kein Gewähr über die mit eMeal - Menuplanung erstellten Berechnungen und
+            Lagerhandbücher. Obwohl wir unsere Berechnungen regelmässig prüfen, können wir Fehler nie ganz
+            ausschliessen. eMeal - Menuplanung haftet für entstandende Schäden nicht!
+        </span>
+    </article>
+
+    <article class="page">
+        <h1 class="page-title">Wochenübersicht</h1>
+        <span class="val-week-error"></span>
+
+        <div class="val-week-view">
+            <table class="val-week-view-table">
+
+            </table>
+        </div>
+
+    </article>
+
+    <article class="page">
+        <h1 class="page-title">Einkaufsliste</h1>
+        <table class="shopping-list"></table>
+
+    </article>
+
+
+</body>
+
+</html>

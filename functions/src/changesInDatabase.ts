@@ -4,8 +4,8 @@ import { db } from '.';
 /**
  * Updated den weekTitle in dem zugehörigen Camp.
  * 
- * @param change 
- * @param context 
+ * @param change changes in the document
+ * 
  */
 export async function changesInSpecificMeal(change: functions.Change<FirebaseFirestore.DocumentSnapshot>) {
 
@@ -49,24 +49,3 @@ export async function changesInSpecificMeal(change: functions.Change<FirebaseFir
     return null;
 }
 
-export async function campChanged(change: functions.Change<FirebaseFirestore.DocumentSnapshot>, context: functions.EventContext) {
-
-    // const dataBefore = change.before.data();
-    // const dataAfter = change.after.data();
-
-    // TODO: deleted day -> delete recipes from this day...
-    // löschen der specifischen Rezepten und Mahlzeiten...
-    // führt ansonsten zu einem Fehler beim Export!
-
-    return;
-}
-
-export async function deleteCamp(snapshot: FirebaseFirestore.DocumentSnapshot, context: functions.EventContext) {
-
-    const specificRecipesRefs = await db.collectionGroup('specificRecipes').where('campId', '==', snapshot.id).get();
-    specificRecipesRefs.forEach(doc => doc.ref.delete());
-
-    const specificMealsRefs = await db.collectionGroup('specificMeals').where('campId', '==', snapshot.id).get();
-    specificMealsRefs.forEach(doc => doc.ref.delete());
-
-}

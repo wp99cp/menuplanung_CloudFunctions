@@ -4,7 +4,6 @@ import { db } from ".";
  * 
  * This function creates for the user a new document "users/{userId}".
  * 
- * 
  * @param user User for which the doc should get created
  * 
  */

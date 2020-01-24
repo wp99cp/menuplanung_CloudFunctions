@@ -28,6 +28,10 @@ interface UnitLookUpTable {
  */
 const unitLookUp: UnitLookUpTable = units;
 
+/** Error: Can't convert unit! */
+export class UnitConvertionError extends Error { }
+
+
 /**
  * converts any unit to it's base unit,
  * this convertion is based on the unitLookUpTable
@@ -63,5 +67,3 @@ export function toUnitMeasure(measure: number, unit: string): { measure: number,
   return { measure: newMeasure, unit: newUnit };
 
 }
-
-export class UnitConvertionError extends Error { }

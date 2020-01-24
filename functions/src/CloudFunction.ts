@@ -22,8 +22,12 @@ export const createCallableCloudFunc = (fkt: CloudFunction, memory?: FunctionMem
         });
 };
 
-
+/**
+ * 
+ * @param memory 
+ */
 export const cloudFunction = (memory: FunctionMemory = '256MB') => {
+
     return functions
         // sets the region on which the cloud functions get exicuded.
         // this region must be also set in the call of the function

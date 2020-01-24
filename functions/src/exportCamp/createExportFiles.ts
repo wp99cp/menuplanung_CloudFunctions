@@ -1,9 +1,9 @@
 import admin = require('firebase-admin');
 
-import { db, projectId } from '.';
+import { db, projectId } from '..';
 import { createHTML } from './createHTMLForExport';
 import { exportCampData } from './exportData';
-import { ResponseData } from './interface-responseData';
+import { ResponseData } from '../interface-responseData';
 
 /**
  * 
@@ -14,7 +14,7 @@ import { ResponseData } from './interface-responseData';
  * the exportedData form the requested camp.
  *
  */
-export async function createPDF(requestData: any): Promise<ResponseData> {
+export async function createExportFiles(requestData: any): Promise<ResponseData> {
 
     // load dependecies for creating a pdf with puppeteer
     const puppeteer = require('puppeteer');
@@ -48,7 +48,10 @@ export async function createPDF(requestData: any): Promise<ResponseData> {
         }
     });
 
-    return await (await writeToDocument(requestData.campId, filePath) as FirebaseFirestore.DocumentData).data();
+    // saves the shopping list as csv
+    await saveAsCSV(exportData.shoppingList, filePath);
+
+    return await (await addDocInExportCollection(requestData.campId, filePath) as FirebaseFirestore.DocumentData).data();
 
 }
 
@@ -60,12 +63,14 @@ export async function createPDF(requestData: any): Promise<ResponseData> {
  * @param campId Id of the exported camp 
  * @param filePath unique file path to the exported files
  */
-async function writeToDocument(campId: string, filePath: string): Promise<FirebaseFirestore.DocumentSnapshot> {
+async function addDocInExportCollection(campId: string, filePath: string): Promise<FirebaseFirestore.DocumentSnapshot> {
 
     const exportInfos = {
         path: filePath,
-        docs: ['pdf', 'html'],
+        docs: ['pdf', 'html', 'csv'],
+        // now
         exportDate: new Date(),
+        // one month
         expiryDate: new Date(new Date().getTime() + (1000 * 60 * 60 * 24 * 30))
     };
 
@@ -77,15 +82,50 @@ async function writeToDocument(campId: string, filePath: string): Promise<Fireba
  * Saves the html content of the current Page as HTML
  * 
  * @param page currentPage
- * @param filePath pathe where the file should get saved
+ * @param filePath path where the file should get saved
  */
 async function saveAsHTML(page: any, filePath: string) {
 
     const html = await page.evaluate(() => { return (document.body.parentElement as HTMLElement).innerHTML; });
-    const cloudStorage = admin.storage().bucket(projectId + '.appspot.com');
-    const pdfFile = cloudStorage.file(filePath + '.html');
+
+    const htmlFile = getCloudStorage().file(filePath + '.html');
     const fileMetadata = { contentType: 'application/html' };
-    pdfFile.save(html, fileMetadata, (err) => { console.log(err); });
+    htmlFile.save(html, fileMetadata, (err) => { console.log(err); });
+
+}
+
+
+/**
+ * Saves the shoppingList as an CSV
+ * 
+ * @param page currentPage
+ * @param filePath path where the file should get saved
+ */
+async function saveAsCSV(shoppingList: any, filePath: string) {
+
+    const { Parser } = require('json2csv');
+    const fields = ['measure', 'unit', 'food', 'comment', 'category'];
+
+    // "withBOM" for utf-8 in Excel && "eol" for open with Excel
+    const opts = { fields, withBOM: true, eol: "\r\n", delimiter: ";" };
+
+    // convert shopping list to an array
+    // TODO: könnte schöner mit der flatten methode von json2csv gelöst werden
+    const list: { food: string, measure: string, unit: string, category: string }[] = [];
+    for (const category of shoppingList.shoppingList) {
+        for (const ingredient of category.ingredients) {
+            ingredient.category = category.name;
+            list.push(ingredient);
+        }
+    }
+
+    // convert array to csv
+    const parser = new Parser(opts);
+    const csv = parser.parse(list);
+
+    const csvFile = getCloudStorage().file(filePath + '.csv');
+    const fileMetadata = { contentType: 'application/csv' };
+    csvFile.save(csv, fileMetadata, (err) => { console.log(err); });
 
 }
 
@@ -114,8 +154,6 @@ function generatingFileName(campId: string) {
  */
 async function saveAsPDF(page: any, filePath: string, callback: any) {
 
-    // loads the cloudStorage default bucket
-    const cloudStorage = admin.storage().bucket(projectId + '.appspot.com');
 
     // custom print settings
     const printOptions = {
@@ -128,8 +166,19 @@ async function saveAsPDF(page: any, filePath: string, callback: any) {
     const pdfBuffer = await page.pdf(printOptions);
 
     // saves the file in the cloudStorage
-    const pdfFile = cloudStorage.file(filePath + '.pdf');
+    const pdfFile = getCloudStorage().file(filePath + '.pdf');
     const fileMetadata = { contentType: 'application/pdf' };
     pdfFile.save(pdfBuffer, fileMetadata, callback);
 
 }
+
+/**
+ * 
+ * @returns the default bucket (the cloudStorage) of the current project.
+ * 
+ */
+function getCloudStorage() {
+
+    return admin.storage().bucket(projectId + '.appspot.com');
+}
+
