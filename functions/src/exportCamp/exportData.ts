@@ -80,7 +80,7 @@ function transformToWeekTable(campInfo: any) {
 
         // converts datum to local date string
         tableHeaders.push((new Date(day.date._seconds * 1000))
-            .toLocaleDateString('de-CH', { weekday: 'long', year: 'numeric', month: 'short', day: '2-digit' }));
+            .toLocaleDateString('de-CH', { weekday: 'long', year: 'numeric', month: 'short', day: '2-digit', timeZone: 'Europe/Zurich' }));
 
         // sort meals, if they aren't undefined
         if (day.meals !== undefined) {

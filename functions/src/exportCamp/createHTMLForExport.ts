@@ -14,7 +14,7 @@ export const createHTML = (data: any) => {
     dom.innerHTML = data.campData.name;
 
     dom = document.querySelector('.val-current-date') as Element;
-    dom.innerHTML = 'Version vom ' + new Date().toLocaleDateString('de-CH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    dom.innerHTML = 'Version vom ' + new Date().toLocaleDateString('de-CH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Europe/Zurich' });
 
     dom = document.querySelector('.val-description') as Element;
     dom.innerHTML = data.campData.description;
@@ -76,7 +76,7 @@ export const createHTML = (data: any) => {
         newPage.innerHTML = `
             <h1 class="page-title meal-name">` + meal.name + `</h1>
             <span class="meal-description">` + meal.description + `</span>
-            <span class="meal-date">` + new Date(meal.date).toLocaleDateString('de-CH', { weekday: 'long', month: 'long', day: '2-digit' }) + `</span>
+            <span class="meal-date">` + new Date(meal.date).toLocaleDateString('de-CH', { weekday: 'long', month: 'long', day: '2-digit', timeZone: 'Europe/Zurich' }) + `</span>
             <span class="meal-usedAs">` + meal.usedAs + `</span>`;
 
         const recipesNode = document.createElement('div');
