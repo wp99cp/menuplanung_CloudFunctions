@@ -16,8 +16,21 @@ export const createHTML = (data: any) => {
     dom = document.querySelector('.val-current-date') as Element;
     dom.innerHTML = 'Version vom ' + new Date().toLocaleDateString('de-CH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Europe/Zurich' });
 
+    // set Vegis and participants
+    dom = document.querySelector('.val-vegis') as Element;
+    dom.innerHTML = data.campData.vegetarier;
+    dom = document.querySelector('.val-participants') as Element;
+    dom.innerHTML = data.campData.participants;
+
+    // set camp description 
     dom = document.querySelector('.val-description') as Element;
     dom.innerHTML = data.campData.description;
+
+    // set Dauer
+    dom = document.querySelector('.val-dauer') as Element;
+    dom.innerHTML = new Date(data.campData.days[0].date).toLocaleDateString('de-CH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Europe/Zurich' }) +
+        ' bis ' + new Date(data.campData.days[data.campData.days.length - 1].date).toLocaleDateString('de-CH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Europe/Zurich' });
+
 
     // weekView
     dom = document.querySelector('.val-week-error') as Element;
@@ -25,6 +38,8 @@ export const createHTML = (data: any) => {
 
     dom = document.querySelector('.val-week-view-table') as Element;
     dom.innerHTML = `<p>Wochenübersicht zur Zeit nicht verfügbar!!!</p>`;
+
+    // TODO: add WeekView!!
 
     // shoppingList
     const shoppingList = document.querySelector('.shopping-list') as Element;

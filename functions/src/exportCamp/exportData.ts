@@ -149,8 +149,6 @@ function sortList(rows: HashTable): HashTable {
 
     const rowsOrdered: any = {};
 
-
-
     // Sortiert das Objekt
     Object.keys(rows)
         .sort((a, b) => orderOfMahlzeiten.indexOf(a) - orderOfMahlzeiten.indexOf(b))
@@ -181,8 +179,12 @@ async function createCampExportData(requestData: { campId: string }): Promise<an
         throw new Error("Can't find camp");
 
     // Sortiert die Tage nach dem Datum
-    interface WithDate { date: number; }
-    campData.days?.sort((a: WithDate, b: WithDate) => a.date - b.date);
+    for (const day of campData?.days) {
+        day.date = new Date(day.date.seconds * 1000);
+
+    }
+    interface WithDate { date: Date; }
+    campData.days?.sort((a: WithDate, b: WithDate) => a.date.getTime() - b.date.getTime());
 
     return campData;
 
