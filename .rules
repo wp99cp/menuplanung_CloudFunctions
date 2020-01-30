@@ -126,7 +126,7 @@ service cloud.firestore {
         allow create: if isAuth() && isOwner(request.resource.data) && validChanges();
         allow list, get: if hasAccess();
         allow update: if hasAccess() && checkAccessChanges() && validChanges();
-        allow delete: if isOwner();
+        allow delete: if isOwner(resource.data);
 
 
 
@@ -164,7 +164,7 @@ service cloud.firestore {
             allow create: if isAuth() && isOwner(request.resource.data) && validChanges();
             allow list, get: if hasAccess();
             allow update: if hasAccess() && checkAccessChanges() && validChanges();
-            allow delete: if isOwner();
+            allow delete: if isOwner(resource.data);
 
 
 
