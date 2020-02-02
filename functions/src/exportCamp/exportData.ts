@@ -438,7 +438,7 @@ async function addMealToList(campData: any, meal: Meal, mealDate: firestore.Time
 
     // load recipes
     meal.recipes = [];
-    await Promise.all((await loadMeal(meal.firestoreElementId)).docs.map(async (recipesRef) => {
+    await Promise.all((await loadRecipes(meal.firestoreElementId)).docs.map(async (recipesRef) => {
 
         const recipe = recipesRef.data() as Recipe;
 
@@ -468,13 +468,13 @@ function loadSpecificMeal(meal: Meal) {
 
 function loadSpecificRecipe(meal: Meal, recipesRef: firestore.QueryDocumentSnapshot) {
 
-    return db.doc('meals/' + meal.firestoreElementId + '/recipes/' + recipesRef.id + '/specificRecipes/' + meal.specificId).get();
+    return db.doc('/recipes/' + recipesRef.id + '/specificRecipes/' + meal.specificId).get();
 
 }
 
-function loadMeal(firestoreElementId: string) {
+function loadRecipes(firestoreElementId: string) {
 
-    return db.collection('meals/' + firestoreElementId + '/recipes').get();
+    return db.collection('recipes').where('meals', 'array-contains', firestoreElementId).get();
 
 }
 

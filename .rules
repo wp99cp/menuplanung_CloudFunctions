@@ -147,12 +147,9 @@ service cloud.firestore {
 
         }
 
+    }
 
-
-
-
-
-        // recipes
+    // recipes
         match /recipes/{recipeID} {
 
             function validChanges(){
@@ -187,8 +184,6 @@ service cloud.firestore {
 
 
         }
-
-    }
 
 
  }
