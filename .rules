@@ -51,8 +51,7 @@ service cloud.firestore {
                 // can't change it's own uid
                 request.resource.data.visibility in ['visible', 'hidden'] &&
                 // only this 3 fields are allowed
-                request.resource.data.keys().hasAll(['displayName', 'email', 'visibility']) &&
-                request.resource.data.size() == 3;
+                request.resource.data.keys().hasAll(['displayName', 'email', 'visibility']);
 
         }
 
@@ -81,10 +80,10 @@ service cloud.firestore {
 
             return
                 // participants fields are numbers
-                request.resource.data.participants is number &&
-                request.resource.data.vegetarier is number &&
+                request.resource.data.camp_participants is number &&
+                request.resource.data.camp_vegetarians is number &&
                 // has name
-                request.resource.data.name.size() > 0;
+                request.resource.data.camp_name.size() > 0;
 
         }
 
@@ -106,11 +105,20 @@ service cloud.firestore {
 
 
     // group query for delete specificRecipes
-        match /{path=**}/specificRecipes/{specificRecipeID} {
+    match /{path=**}/specificRecipes/{specificRecipeId} {
 
-            // TODO: not save
-            allow read;
-        }
+        // TODO: not save
+        allow read, list;
+
+    }
+
+    // group query for delete specificRecipes
+    match /{path=**}/specificMeals/{specificMealId} {
+
+        // TODO: not save
+        allow read, list;
+        
+    }
 
     // Meals
     match /meals/{mealID} {
@@ -118,8 +126,8 @@ service cloud.firestore {
         function validChanges(){
             return 
                 // has name
-                request.resource.data.name is string &&
-                request.resource.data.name.size() > 0;
+                request.resource.data.meal_name is string &&
+                request.resource.data.meal_name.size() > 0;
 
         }
 
@@ -141,7 +149,7 @@ service cloud.firestore {
 
             // TODO: add verification or access rules
             allow create:  if isAuth() && validChanges();
-            allow get, list; // list is not allowed
+            allow get, list;
             allow update: if validChanges();
             allow delete;
 

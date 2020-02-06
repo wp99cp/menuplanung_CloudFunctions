@@ -2,8 +2,10 @@ import admin = require('firebase-admin');
 
 import { db, projectId } from '..';
 import { createHTML } from './createHTMLForExport';
-import { exportCampData } from './exportData';
-import { ResponseData } from '../interface-responseData';
+import { exportCamp as exportCamp } from './exportData';
+import { ResponseData } from '../CloudFunction';
+import { ExportedCamp } from '../interfaces/exportDatatypes';
+import { Ingredient } from '../interfaces/firestoreDatatypes';
 
 /**
  * 
@@ -14,7 +16,7 @@ import { ResponseData } from '../interface-responseData';
  * the exportedData form the requested camp.
  *
  */
-export async function createExportFiles(requestData: any): Promise<ResponseData> {
+export async function createExportFiles(requestData: { campId: string }): Promise<ResponseData> {
 
     // load dependecies for creating a pdf with puppeteer
     const puppeteer = require('puppeteer');
@@ -31,7 +33,7 @@ export async function createExportFiles(requestData: any): Promise<ResponseData>
     await page.emulateMedia("print");
 
     // Update the data from the template...
-    const exportData = (await exportCampData(requestData)).data;
+    const exportData = (await exportCamp(requestData.campId));
     await page.evaluate(createHTML, exportData);
 
     // generates the file path out of the campId a unique token
@@ -49,9 +51,10 @@ export async function createExportFiles(requestData: any): Promise<ResponseData>
     });
 
     // saves the shopping list as csv
-    await saveAsCSV(exportData.shoppingList, filePath);
+    await saveAsCSV(exportData, filePath);
 
-    return await (await addDocInExportCollection(requestData.campId, filePath) as FirebaseFirestore.DocumentData).data();
+    const ref = (await addDocInExportCollection(requestData.campId, filePath) as FirebaseFirestore.DocumentData).data();
+    return await ref;
 
 }
 
@@ -101,7 +104,7 @@ async function saveAsHTML(page: any, filePath: string) {
  * @param page currentPage
  * @param filePath path where the file should get saved
  */
-async function saveAsCSV(shoppingList: any, filePath: string) {
+async function saveAsCSV(camp: ExportedCamp, filePath: string) {
 
     const { Parser } = require('json2csv');
     const fields = ['measure', 'unit', 'food', 'comment', 'category'];
@@ -110,14 +113,15 @@ async function saveAsCSV(shoppingList: any, filePath: string) {
     const opts = { fields, withBOM: true, eol: "\r\n", delimiter: ";" };
 
     // convert shopping list to an array
-    // TODO: könnte schöner mit der flatten methode von json2csv gelöst werden
-    const list: { food: string, measure: string, unit: string, category: string }[] = [];
-    for (const category of shoppingList.shoppingList) {
-        for (const ingredient of category.ingredients) {
-            ingredient.category = category.name;
-            list.push(ingredient);
-        }
-    }
+    interface ExtendedIngredient extends Ingredient { category: string }
+    const list: ExtendedIngredient[] = [];
+    camp.shoppingList.forEach(cat => cat.ingredients.forEach(ing => {
+
+        const ingr = ing as ExtendedIngredient;
+        ingr.category = cat.categoryName;
+        list.push(ingr);
+
+    }));
 
     // convert array to csv
     const parser = new Parser(opts);

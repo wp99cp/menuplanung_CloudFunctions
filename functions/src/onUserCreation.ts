@@ -1,4 +1,5 @@
 import { db } from ".";
+import { firestore } from "firebase-admin";
 
 /**
  * 
@@ -14,7 +15,10 @@ export function onUserCreation() {
         const userData = {
             displayName: user.displayName,
             email: user.email,
-            visibility: 'visible'
+            visibility: 'visible',
+            date_modified: firestore.FieldValue.serverTimestamp(),
+            date_added: firestore.FieldValue.serverTimestamp(),
+            access: { [user.uid]: 'owner' }
         };
 
         // adds the user to the database

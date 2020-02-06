@@ -1,10 +1,8 @@
 import * as admin from 'firebase-admin';
 
-import { changesInSpecificMeal } from './changesInDatabase';
-import { onDeleteCamp } from "./onDeleteCamp";
 import { cloudFunction, createCallableCloudFunc } from './CloudFunction';
 import { createExportFiles } from './exportCamp/createExportFiles';
-import { exportCampData } from './exportCamp/exportData';
+import { onDeleteCamp } from './onDeleteCamp';
 import { onUserCreation } from './onUserCreation';
 
 // Use to set correct projectId and serviceAccount for the database
@@ -28,14 +26,5 @@ export const db = admin.firestore();
 ////////////////////////////////////
 
 exports.newUserCreated = cloudFunction().auth.user().onCreate(onUserCreation());
-
-exports.exportCampData = createCallableCloudFunc(exportCampData);
 exports.createPDF = createCallableCloudFunc(createExportFiles, "2GB");
-
-exports.updateWeekTitle = cloudFunction()
-    .firestore.document('meals/{mealId}/specificMeals/{specificMealId}')
-    .onUpdate(changesInSpecificMeal);
-
-exports.deleteCamp = cloudFunction()
-    .firestore.document('camps/{campId}')
-    .onDelete(onDeleteCamp);
+exports.deleteCamp = cloudFunction().firestore.document('camps/{campId}').onDelete(onDeleteCamp);

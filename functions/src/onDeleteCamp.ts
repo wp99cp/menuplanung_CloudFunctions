@@ -12,10 +12,8 @@ import * as functions from 'firebase-functions';
 export async function onDeleteCamp(snapshot: FirebaseFirestore.DocumentSnapshot, context?: functions.EventContext) {
 
     // query for specific recipes and camps
-    const specificRecipesRefs = db.collectionGroup('specificRecipes').where('campId', '==', snapshot.id).get();
-    const specificMealsRefs = db.collectionGroup('specificMeals').where('campId', '==', snapshot.id).get();
-
-    // TODO: Könnte noch besser optimiert werden! 
+    const specificRecipesRefs = db.collectionGroup('specificRecipes').where('used_in_camp', '==', snapshot.id).get();
+    const specificMealsRefs = db.collectionGroup('specificMeals').where('used_in_camp', '==', snapshot.id).get();
 
     // await the results
     await Promise.all([specificRecipesRefs, specificMealsRefs]);

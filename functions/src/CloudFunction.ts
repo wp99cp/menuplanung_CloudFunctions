@@ -1,8 +1,17 @@
-import { ResponseData } from './interface-responseData';
 import * as functions from 'firebase-functions';
 
 type CloudFunction = (requestData: any) => Promise<ResponseData>;
 type FunctionMemory = "256MB" | "128MB" | "512MB" | "1GB" | "2GB" | undefined;
+
+/**
+ * ResponseData type for httpsCallable functions
+ * 
+ */
+export interface ResponseData {
+    data: any;
+    error?: string[];
+
+}
 
 /**
  *
