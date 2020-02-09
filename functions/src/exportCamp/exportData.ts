@@ -1,7 +1,7 @@
 import { db, projectId } from '..';
 import { ExportedCamp, ExportedDay, ExportedMeal, ExportedRecipe } from '../interfaces/exportDatatypes';
 import { FirestoreSpecificMeal, FirestoreSpecificRecipe } from '../interfaces/firestoreDatatypes';
-import { ShoppingListCreator } from './shopping-list';
+import { ShoppingListCreator, Categories, Units } from './shopping-list';
 
 export class InvalidDocumentPath extends Error { }
 
@@ -18,8 +18,13 @@ export class InvalidDocumentPath extends Error { }
 export async function exportCamp(campId: string): Promise<ExportedCamp> {
 
     const camp = await loadCamp(campId);
-    await loadDays(camp);
-    await createCampShoppingList(camp);
+
+
+    const categories = (await db.doc('/sharedData/categories').get()).data() as Categories;
+    const units = (await db.doc('/sharedData/units').get()).data() as Units;
+
+    await loadDays(camp, categories, units);
+    await createCampShoppingList(camp, categories, units);
 
     // For debugging. In the localhost firestore the exportedCamp
     // gets saved in the collection 'camps/{campId}/exports-data'
@@ -71,10 +76,10 @@ async function loadCamp(campId: string): Promise<ExportedCamp> {
  * @returns a void Promise which resolves after loading data
  * 
  */
-async function loadDays(camp: ExportedCamp): Promise<void> {
+async function loadDays(camp: ExportedCamp, categories: Categories, units: Units): Promise<void> {
 
     // load meals of the day
-    const dayPromises = camp.days.map(async day => loadDay(camp, day));
+    const dayPromises = camp.days.map(async day => loadDay(camp, day, categories, units));
     camp.days = await Promise.all(dayPromises);
 
     // load meals top prepare befor the camp starts
@@ -100,7 +105,7 @@ async function loadDays(camp: ExportedCamp): Promise<void> {
  * @param day ExportedDay
  * 
  */
-async function loadDay(camp: ExportedCamp, day: ExportedDay): Promise<ExportedDay> {
+async function loadDay(camp: ExportedCamp, day: ExportedDay, categories: Categories, units: Units): Promise<ExportedDay> {
 
     // load meals and recipes
     const mealsRefs = (await db.collectionGroup('specificMeals')
@@ -124,7 +129,7 @@ async function loadDay(camp: ExportedCamp, day: ExportedDay): Promise<ExportedDa
     day.meals = day.meals.sort(mealCompareFn);
 
     // create shoppingList of this day
-    await createDayShoppingList(day);
+    await createDayShoppingList(day, categories, units);
 
     return day;
 
@@ -179,7 +184,7 @@ async function loadMeal(camp: ExportedCamp, specificMealRef: FirebaseFirestore.Q
     meal.meal_data_as_date = new Date(specificMeal.meal_date.seconds * 1000);
 
     const recipesRefs = await (await db.collection('recipes').where('used_in_meals', 'array-contains', mealId).get()).docs;
-    const recipePromises = recipesRefs.map(async recipeRef => loadRecipe(camp, recipeRef, specificMealRef.id));
+    const recipePromises = recipesRefs.map(async recipeRef => loadRecipe(camp, recipeRef, specificMealRef.id, meal));
     meal.recipes = await Promise.all(recipePromises);
 
     return meal;
@@ -195,7 +200,7 @@ async function loadMeal(camp: ExportedCamp, specificMealRef: FirebaseFirestore.Q
  * @param recipeRef 
  * @param specificId 
  */
-async function loadRecipe(camp: ExportedCamp, recipeRef: FirebaseFirestore.QueryDocumentSnapshot, specificId: string):
+async function loadRecipe(camp: ExportedCamp, recipeRef: FirebaseFirestore.QueryDocumentSnapshot, specificId: string, meal: ExportedMeal):
     Promise<ExportedRecipe> {
 
 
@@ -203,10 +208,16 @@ async function loadRecipe(camp: ExportedCamp, recipeRef: FirebaseFirestore.Query
     const specificRecipe = (await db.doc('recipes/' + recipeRef.id + '/specificRecipes/' + specificId).get()).data() as FirestoreSpecificRecipe;
     const recipe = recipeRef.data() as ExportedRecipe;
 
-    // combine
-    // TODO: calc Participants
-    recipe.recipe_participants = 0;
+    // calc the participants
+    recipe.recipe_participants = specificRecipe.recipe_override_participants ? specificRecipe.recipe_participants : meal.meal_participants;
+
+    // or set the user group...
     recipe.recipe_used_for = specificRecipe.recipe_used_for;
+    switch (recipe.recipe_used_for) {
+        case 'leaders': recipe.recipe_participants = camp.camp_leaders;
+        case 'vegetarians': recipe.recipe_participants = camp.camp_vegetarians;
+        case 'non-vegetarians': recipe.recipe_participants -= camp.camp_vegetarians;
+    }
 
     return recipe;
 }
@@ -221,10 +232,11 @@ async function loadRecipe(camp: ExportedCamp, recipeRef: FirebaseFirestore.Query
  * @returns a void Promise which resolves after creating the shoppingList
  * 
  */
-async function createCampShoppingList(camp: ExportedCamp): Promise<void> {
+async function createCampShoppingList(camp: ExportedCamp, categories: Categories, units: Units): Promise<void> {
+
 
     // creates the shoppingList
-    const shoppingListCreator = new ShoppingListCreator();
+    const shoppingListCreator = new ShoppingListCreator(categories, units);
     camp.days.forEach(day => shoppingListCreator.mergeShoppingList(day.shoppingList));
 
     // sets the shoppingList
@@ -242,9 +254,9 @@ async function createCampShoppingList(camp: ExportedCamp): Promise<void> {
  * @returns a void Promise which resolves after creating the shoppingList
  * 
  */
-async function createDayShoppingList(day: ExportedDay): Promise<void> {
+async function createDayShoppingList(day: ExportedDay, categories: Categories, units: Units): Promise<void> {
 
-    const shoppingListCreator = new ShoppingListCreator();
+    const shoppingListCreator = new ShoppingListCreator(categories, units);
 
     // only the meals which don't get prepared are added to the shoppingList of this day
     day.meals.forEach(meal => {

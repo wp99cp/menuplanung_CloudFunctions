@@ -1,6 +1,8 @@
-import { Ingredient } from '../interfaces/firestoreDatatypes'
-import { ExportedRecipe } from '../interfaces/exportDatatypes';
+import admin = require('firebase-admin');
 
+import { db } from '..';
+import { ExportedRecipe } from '../interfaces/exportDatatypes';
+import { Ingredient } from '../interfaces/firestoreDatatypes';
 
 export type ShoppingList = ShoppingListCategory[];
 export interface ShoppingListCategory {
@@ -21,6 +23,29 @@ interface ShoppingListItems {
 
 }
 
+export interface Units {
+
+    [search_query: string]: {
+
+        base_from: string;
+        base_unit: string;
+        factor: number;
+        only_for_food_item: string
+
+    };
+
+}
+
+export interface Categories {
+    [food_item: string]: {
+
+        category_name: string;
+        sub_category: string;
+        base_unit: string
+
+    };
+}
+
 /**
  * Helps to create a ShoppingList
  * 
@@ -30,23 +55,28 @@ interface ShoppingListItems {
 export class ShoppingListCreator {
 
     private internalList: InternalShoppingList;
+    private categories: Categories;
+    private units: Units;
 
-    constructor() {
+    constructor(categories: Categories, units: Units) {
 
         this.internalList = {};
+
+        this.categories = categories;
+        this.units = units;
 
     }
 
     /**
      * 
-     * Fügt ein Rezept zur ShoppingList hinzu
+     * Fügt ein Rezept zur ShoppingList hinzu.
      * 
-     * @param recipe 
+     * @param recipe Rezept mit den Zutaten
+     * 
      */
     public addRecipe(recipe: ExportedRecipe) {
 
         recipe.ingredients.forEach(ing => {
-
 
             const catName = this.getCatName(ing);
             ing.measure = ing.measure * recipe.recipe_participants;
@@ -60,29 +90,85 @@ export class ShoppingListCreator {
     }
 
     /**
-     * Convertiert ein Ingredient in die
-     * BaseUnit.
+     * Convertiert ein Ingredient in die BaseUnit. 
      * 
-     * @param ing 
+     * Hierzu wird das Lebensmittel zuerst in die Basiseinheit
+     * umgerechnet (d.h. z.B. Gramm werden in Kilogramm umgerechnet).
+     * Anschliessen wird (falls vorhanden) eine spezischische Umrechnung
+     * von einer Basisheinheit zu einer anderen Basiseinheit vorgenommen.
+     * 
+     * Dies bringt den Vorteil mit sich, dass spezifische Umrechnungen nur 
+     * zwischen den Basiseinheiten definiert sein müssen.
+     *  
+     * @param ing Zutat die Umgerechnet werden soll.
+     * 
      */
     private toBaseUnit(ing: Ingredient) {
 
-        ing.unit = 'kg';
-        ing.measure = 1000;
+        // search for specific transformation
+        let query = ing.unit + ':' + ing.food;
+
+        // search for unit transformation
+        query = ing.unit + ':';
+        if (this.units[query] !== undefined) {
+            ing.unit = this.units[query].base_unit;
+            ing.measure = ing.measure * this.units[query].factor;
+
+            // search for specific transformation
+            query = ing.unit + ':' + ing.food;
+            if (this.units[query] !== undefined) {
+                ing.unit = this.units[query].base_unit;
+                ing.measure = ing.measure * this.units[query].factor;
+            }
+
+            // Erfolgreich Umgerechent!
+            return;
+
+        }
+
+
+        // Ist eine Einheit nicht bekannt, so gibt dies keinen Fehler.
+        // Das Food Item wird einfach unverändert gelassen, dennoch wird diese
+        // Umbekannte einheit notiert:
+
+        // write unknown unit to document in 'sharedData/unknownUnits'
+        db.doc('sharedData/unknownUnits')
+            .update({ uncategorised: admin.firestore.FieldValue.arrayUnion(ing.unit) })
+            .catch(e => console.error(e));
 
     }
 
     /**
      * Searches for the category of the ingredient
      * 
-     * @param ing 
+     * @param ing Zutat für die die Kategorie gesucht wird.
      * @returns the name of the category of the ingredient
      * 
      */
     private getCatName(ing: Ingredient) {
 
+        // Kategorie gefunden
+        if (this.categories[ing.food] !== undefined) {
 
+            return this.categories[ing.food].category_name;
+        }
 
+        // suche nach ähnlichen Begrffen...
+        for (const ingName in this.categories) {
+
+            if (ing.food.includes(ingName)) {
+                return this.categories[ing.food].category_name;
+
+            }
+
+        }
+
+        // write unknown unit to document in 'sharedData/foodCategories'
+        db.doc('sharedData/foodCategories')
+            .update({ uncategorised: admin.firestore.FieldValue.arrayUnion(ing.food) })
+            .catch(e => console.error(e));
+
+        // Default Kategorie
         return 'Diverses';
 
     }
@@ -143,7 +229,7 @@ export class ShoppingListCreator {
     }
 
     /**
-     * Exports the ShoppingList
+     * Exports the ShoppingList as a ShoppingList object
      * 
      */
     public getShoppingList(): ShoppingList {

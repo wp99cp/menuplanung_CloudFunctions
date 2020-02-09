@@ -18,6 +18,8 @@ import { Ingredient } from '../interfaces/firestoreDatatypes';
  */
 export async function createExportFiles(requestData: { campId: string }): Promise<ResponseData> {
 
+    const exportDataPromise = exportCamp(requestData.campId);
+
     // load dependecies for creating a pdf with puppeteer
     const puppeteer = require('puppeteer');
 
@@ -33,17 +35,18 @@ export async function createExportFiles(requestData: { campId: string }): Promis
     await page.emulateMedia("print");
 
     // Update the data from the template...
-    const exportData = (await exportCamp(requestData.campId));
+    const exportData = await exportDataPromise;
     await page.evaluate(createHTML, exportData);
 
     // generates the file path out of the campId a unique token
     const filePath = generatingFileName(requestData.campId);
 
+
     // reads out the html content
-    await saveAsHTML(page, filePath);
+    const htmlP = saveAsHTML(page, filePath);
 
     // saves the page as PDF
-    await saveAsPDF(page, filePath, (err: any) => {
+    const pdfP = saveAsPDF(page, filePath, (err: any) => {
         if (!err) {
             // File written successfully.
             console.log('pdf file written successfully');
@@ -51,7 +54,10 @@ export async function createExportFiles(requestData: { campId: string }): Promis
     });
 
     // saves the shopping list as csv
-    await saveAsCSV(exportData, filePath);
+    const csvP = saveAsCSV(exportData, filePath);
+
+    // await all Files to be finished
+    await Promise.all([htmlP, pdfP, csvP]);
 
     const ref = (await addDocInExportCollection(requestData.campId, filePath) as FirebaseFirestore.DocumentData).data();
     return await ref;

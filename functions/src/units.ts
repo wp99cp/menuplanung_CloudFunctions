@@ -1,7 +1,6 @@
 import * as admin from 'firebase-admin';
 
 import { db } from '.';
-import * as units from './data/units.json';
 
 
 // TODO: Einheiten umrechnen können... wichtige Foodelemente
@@ -26,7 +25,7 @@ interface UnitLookUpTable {
  * every supproted unit must be listed in this table
  * 
  */
-const unitLookUp: UnitLookUpTable = units;
+const unitLookUp: UnitLookUpTable = {};
 
 /** Error: Can't convert unit! */
 export class UnitConvertionError extends Error { }
