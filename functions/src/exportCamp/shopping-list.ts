@@ -78,12 +78,16 @@ export class ShoppingListCreator {
 
         recipe.ingredients.forEach(ing => {
 
-            const catName = this.getCatName(ing);
-            ing.measure = ing.measure * recipe.recipe_participants;
-            this.toBaseUnit(ing);
+            // clones the ingredient
+            // Damit die original Daten in den Rezepten nicht überschrieben werden...
+            const ingCopy = JSON.parse(JSON.stringify(ing))
+
+            const catName = this.getCatName(ingCopy);
+            ingCopy.measure = ingCopy.measure * recipe.recipe_participants;
+            this.toBaseUnit(ingCopy);
 
             // adds ingredient
-            this.addIngredient(ing, catName);
+            this.addIngredient(ingCopy, catName);
 
         });
 
@@ -157,7 +161,7 @@ export class ShoppingListCreator {
         for (const ingName in this.categories) {
 
             if (ing.food.includes(ingName)) {
-                return this.categories[ing.food].category_name;
+                return this.categories[ingName].category_name;
 
             }
 
@@ -201,7 +205,7 @@ export class ShoppingListCreator {
      * @param ing 
      * @param categoryName 
      */
-    private addIngredient(ing: Ingredient, categoryName: string) {
+    private addIngredient(ing: Ingredient, categoryName: string, suffix: string = '') {
 
         // category does not exist --> create category
         if (this.internalList[categoryName] === undefined) {
@@ -209,22 +213,39 @@ export class ShoppingListCreator {
         }
 
         // if food exist --> add up measure
-        if (this.internalList[categoryName][ing.food] !== undefined) {
-            // Error on incompatible units
-            if (this.internalList[categoryName][ing.food].unit !== ing.unit) {
-                throw new Error('Incompatible Units!');
+        if (this.internalList[categoryName][ing.food + suffix] !== undefined) {
+
+            // on different units...
+            if (this.internalList[categoryName][ing.food + suffix].unit !== ing.unit) {
+
+                if (suffix === '') {
+
+                    this.addIngredient(ing, categoryName, ' [in ' + ing.unit + ']')
+
+                } else {
+
+                    this.addIngredientToLocalList(categoryName, ing, suffix);
+
+                }
+
             }
 
-            this.internalList[categoryName][ing.food].measure += ing.measure;
+            this.internalList[categoryName][ing.food + suffix].measure += ing.measure;
         }
         else {
             // add the food item to the list
-            this.internalList[categoryName][ing.food] = {
-                measure: ing.measure,
-                comment: ing.comment,
-                unit: ing.unit
-            };
+            this.addIngredientToLocalList(categoryName, ing, suffix);
         }
+
+    }
+
+    private addIngredientToLocalList(categoryName: string, ing: Ingredient, suffix: string) {
+
+        this.internalList[categoryName][ing.food + suffix] = {
+            measure: ing.measure,
+            comment: ing.comment,
+            unit: ing.unit
+        };
 
     }
 
@@ -263,6 +284,13 @@ export class ShoppingListCreator {
             shoppingList.push(shoppingListCategory);
 
         }
+
+
+        // Sortieren der Kategorien
+        shoppingList.sort((a, b) => a.categoryName.localeCompare(b.categoryName));
+
+        // Sortieren der Zutaten
+        shoppingList.forEach(cat => cat.ingredients.sort((a, b) => a.food.localeCompare(b.food)));
 
         return shoppingList;
 

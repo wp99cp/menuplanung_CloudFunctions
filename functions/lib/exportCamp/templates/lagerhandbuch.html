@@ -209,8 +209,6 @@
         }
 
         table.val-week-view-table {
-            transform: rotate(90deg);
-            height: 15cm;
             margin: 50px;
             border-collapse: collapse;
             font-size: 11px;
@@ -222,10 +220,20 @@
 
         table.val-week-view-table td {
             border: 1px solid #ddd;
-            padding: 10px;
+            padding: 5px 10px;
             line-height: 13px;
             text-align: center;
-            width: 80px;
+        }
+
+        .val-week-view-table p {
+            writing-mode: tb;
+            float: right;
+            margin: 5px 10px;
+            font-size: 10px;
+        }
+
+        .val-week-view-table td {
+            max-height: 100px;
         }
     </style>
 </head>

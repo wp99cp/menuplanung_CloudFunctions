@@ -97,6 +97,7 @@ service cloud.firestore {
         match /exports/{docID} {
 
             allow read, list;
+            allow delete;
             
         }
 

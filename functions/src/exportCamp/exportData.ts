@@ -214,9 +214,9 @@ async function loadRecipe(camp: ExportedCamp, recipeRef: FirebaseFirestore.Query
     // or set the user group...
     recipe.recipe_used_for = specificRecipe.recipe_used_for;
     switch (recipe.recipe_used_for) {
-        case 'leaders': recipe.recipe_participants = camp.camp_leaders;
-        case 'vegetarians': recipe.recipe_participants = camp.camp_vegetarians;
-        case 'non-vegetarians': recipe.recipe_participants -= camp.camp_vegetarians;
+        case 'leaders': recipe.recipe_participants = camp.camp_leaders; break;
+        case 'vegetarians': recipe.recipe_participants = camp.camp_vegetarians; break;
+        case 'non-vegetarians': recipe.recipe_participants -= camp.camp_vegetarians; break;
     }
 
     return recipe;

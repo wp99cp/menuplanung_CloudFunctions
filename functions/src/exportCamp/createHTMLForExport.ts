@@ -1,4 +1,4 @@
-import { ExportedCamp } from '../interfaces/exportDatatypes';
+import { ExportedCamp, ExportedMeal } from '../interfaces/exportDatatypes';
 import { ShoppingList } from './shopping-list';
 
 /**
@@ -50,74 +50,63 @@ export const createHTML = (camp: ExportedCamp) => {
 
     }
 
+    const addMealsToWeekView = function (meals: ExportedMeal[]) {
+
+        const str = '<td><p class="meal_in_weekview">';
+        let str2 = '';
+        for (const meal of meals) {
+            if (str2 !== '') {
+                str2 += '<br><br>';
+            }
+            str2 += meal.meal_weekview_name;
+        }
+        return str + str2 + '</p></td>';
+
+    };
+
     /**
      * 
      */
     const createWeekView = function () {
 
-        const mealUsages = ["Zmorgen", "Znüni", "Zmittag", "Zvieri", "Znacht", "Leitersnack"];
+        const mealUsages = ["Leitersnack", "Znacht", "Zvieri", "Zmittag", "Znüni", "Zmorgen"];
 
         let innerHTMLStr = '<table id="weekTable">';
-        innerHTMLStr += "<tr><th></th>";
-        if (camp.meals_to_prepare.length > 0) {
-            innerHTMLStr += '<th> Vor dem Lager </th>';
-        }
-        for (const day of camp.days) {
 
-            innerHTMLStr += '<th>' + new Date(day.day_date_as_date).toLocaleDateString('de-CH', { weekday: 'short', month: 'numeric', day: 'numeric', timeZone: 'Europe/Zurich' }) + '</th>';
-        }
-        innerHTMLStr += "</tr>";
-
+        // Verwendungen
+        innerHTMLStr += '<tr><td><p> Vorbereiten </p></td>';
         for (const mealUsage of mealUsages) {
+            innerHTMLStr += '<td><p>' + mealUsage + '</p></td>';
+        }
+        innerHTMLStr += '<th></th></tr>';
 
-            innerHTMLStr += '<tr><td class="usedAs">' + mealUsage + '</td>';
+        // Vor dem Lager
+        if (camp.meals_to_prepare.length > 0) {
 
-            if (camp.meals_to_prepare.length > 0) {
+            innerHTMLStr += '<tr>';
+            innerHTMLStr += addMealsToWeekView(camp.meals_to_prepare);
+
+            for (const _mealUsage of mealUsages) {
                 innerHTMLStr += '<td></td>';
             }
 
-            for (const day of camp.days) {
-                innerHTMLStr += '<td class="meal_weekview_name">';
-
-                for (const meal of day.meals) {
-
-                    if (meal.meal_used_as === mealUsage) {
-                        innerHTMLStr += '<p>' + meal.meal_weekview_name + '</p>'
-                    }
-                }
-
-                innerHTMLStr += '</td>';
-            }
-            innerHTMLStr += "</tr>";
-
-        }
-
-        innerHTMLStr += '<tr><td class="usedAs"> Vorbereiten </td>';
-        if (camp.meals_to_prepare.length > 0) {
-
-            innerHTMLStr += '<td>';
-            for (const meal of camp.meals_to_prepare) {
-                innerHTMLStr += '<p>' + meal.meal_weekview_name + '</p>'
-            }
-            innerHTMLStr += '</td>';
+            innerHTMLStr += '<th><p> Vor dem Lager </p></th></tr>';
 
         }
 
         for (const day of camp.days) {
 
-            if (day.meals_to_prepare.length > 0) {
+            innerHTMLStr += '<tr>';
+            innerHTMLStr += addMealsToWeekView(day.meals_to_prepare);
 
-                innerHTMLStr += '<td>';
-                for (const meal of day.meals_to_prepare) {
-                    innerHTMLStr += '<p>' + meal.meal_weekview_name + '</p>'
-                }
-                innerHTMLStr += '</td>';
-
-            } else {
-
-                innerHTMLStr += '<td></td>';
-
+            for (const mealUsage of mealUsages) {
+                innerHTMLStr += addMealsToWeekView(day.meals.filter(meal => (meal.meal_used_as === mealUsage)))
             }
+
+            innerHTMLStr += '<th><p>'
+                + new Date(day.day_date_as_date).toLocaleDateString('de-CH', { weekday: 'short', month: 'numeric', day: 'numeric', timeZone: 'Europe/Zurich' })
+                + '</p></th></tr>';
+
         }
 
         innerHTMLStr += '</table>';
@@ -152,7 +141,7 @@ export const createHTML = (camp: ExportedCamp) => {
                 const ingredientTr = document.createElement('tr');
                 ingredientTr.classList.add('ingredient');
                 ingredientTr.innerHTML = `
-                    <td class="measure var-measure"> `+ ingredient.measure.toFixed(3) + `  </td>
+                    <td class="measure var-measure"> `+ ((ingredient.measure !== 0) ? ingredient.measure.toFixed(2) : '') + `  </td>
                     <td class="unit var-unit"> `+ ingredient.unit + `  </td>
                     <td class="food var-food"> `+ ingredient.food + `  </td>`;
 
