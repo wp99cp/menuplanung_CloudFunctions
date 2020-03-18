@@ -43,7 +43,7 @@ export async function createExportFiles(requestData: { campId: string }): Promis
 
 
     // reads out the html content
-    const htmlP = saveAsHTML(page, filePath);
+    const htmlP = (projectId === 'cevizh11') ? saveAsHTML(page, filePath) : null;
 
     // saves the page as PDF
     const pdfP = saveAsPDF(page, filePath, (err: any) => {
@@ -76,10 +76,10 @@ async function addDocInExportCollection(campId: string, filePath: string): Promi
 
     const exportInfos = {
         path: filePath,
-        docs: ['pdf', 'html', 'csv'],
+        docs: (projectId === 'cevizh11') ? ['pdf', 'html', 'csv'] : ['pdf', 'csv'],
         // now
         exportDate: new Date(),
-        // one month
+        // one month after creation
         expiryDate: new Date(new Date().getTime() + (1000 * 60 * 60 * 24 * 30))
     };
 

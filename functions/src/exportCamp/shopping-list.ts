@@ -19,6 +19,7 @@ interface ShoppingListItems {
         measure: number;
         unit: string;
         comment: string;
+        fresh: boolean;
     }
 
 }
@@ -70,24 +71,31 @@ export class ShoppingListCreator {
     /**
      * 
      * Fügt ein Rezept zur ShoppingList hinzu.
+     * Dabei werden Frischprodukte als solche gekennzeichnet.
      * 
      * @param recipe Rezept mit den Zutaten
+     * @markFreshProducts = Falls true werden die Frischprodukte gekennzeichnet (default value = true)
      * 
      */
-    public addRecipe(recipe: ExportedRecipe) {
+    public addRecipe(recipe: ExportedRecipe, markFreshProducts = true) {
 
-        recipe.ingredients.forEach(ing => {
+        recipe.ingredients.forEach(ingOrig => {
 
             // clones the ingredient
             // Damit die original Daten in den Rezepten nicht überschrieben werden...
-            const ingCopy = JSON.parse(JSON.stringify(ing))
+            const ing = JSON.parse(JSON.stringify(ingOrig))
 
-            const catName = this.getCatName(ingCopy);
-            ingCopy.measure = ingCopy.measure * recipe.recipe_participants;
-            this.toBaseUnit(ingCopy);
+            const catName = this.getCatName(ing);
+            ing.measure = ing.measure * recipe.recipe_participants;
+            this.toBaseUnit(ing);
+
+            // mark fresh products
+            if (ing.fresh && markFreshProducts) {
+                ing.food += ' (Frischprod.)';
+            }
 
             // adds ingredient
-            this.addIngredient(ingCopy, catName);
+            this.addIngredient(ing, catName);
 
         });
 
@@ -109,36 +117,31 @@ export class ShoppingListCreator {
      */
     private toBaseUnit(ing: Ingredient) {
 
-        // search for specific transformation
-        let query = ing.unit + ':' + ing.food;
-
         // search for unit transformation
-        query = ing.unit + ':';
+        let query = ing.unit + ':';
         if (this.units[query] !== undefined) {
             ing.unit = this.units[query].base_unit;
             ing.measure = ing.measure * this.units[query].factor;
 
-            // search for specific transformation
-            query = ing.unit + ':' + ing.food;
-            if (this.units[query] !== undefined) {
-                ing.unit = this.units[query].base_unit;
-                ing.measure = ing.measure * this.units[query].factor;
-            }
+        } else {
 
-            // Erfolgreich Umgerechent!
-            return;
+            // Ist eine Einheit nicht bekannt, so gibt dies keinen Fehler.
+            // Das Food Item wird einfach unverändert gelassen, dennoch wird diese
+            // Umbekannte einheit notiert:
+
+            // write unknown unit to document in 'sharedData/unknownUnits'
+            db.doc('sharedData/unknownUnits')
+                .update({ uncategorised: admin.firestore.FieldValue.arrayUnion(ing.unit) })
+                .catch(e => console.error(e));
 
         }
 
-
-        // Ist eine Einheit nicht bekannt, so gibt dies keinen Fehler.
-        // Das Food Item wird einfach unverändert gelassen, dennoch wird diese
-        // Umbekannte einheit notiert:
-
-        // write unknown unit to document in 'sharedData/unknownUnits'
-        db.doc('sharedData/unknownUnits')
-            .update({ uncategorised: admin.firestore.FieldValue.arrayUnion(ing.unit) })
-            .catch(e => console.error(e));
+        // search for specific transformation
+        query = ing.unit + ':' + ing.food;
+        if (this.units[query] !== undefined) {
+            ing.unit = this.units[query].base_unit;
+            ing.measure = ing.measure * this.units[query].factor;
+        }
 
     }
 
@@ -180,20 +183,21 @@ export class ShoppingListCreator {
     /**
      * 
      * Adds all the Items of the shoppinglist to the 
-     * InternalShoppingList
+     * InternalShoppingList.
      * 
-     * @param shoppingList 
+     * @param shoppingList shoppingList to add to the current shoppingList
      * 
      */
     public mergeShoppingList(shoppingList: ShoppingList) {
 
-        if (shoppingList !== undefined) {
-
-            shoppingList.forEach(cat => {
-                cat.ingredients.forEach(ing => this.addIngredient(ing, cat.categoryName));
-            });
-
+        if (shoppingList === undefined) {
+            return;
         }
+
+        // merges the shoppingLists
+        shoppingList.forEach(cat => {
+            cat.ingredients.forEach(ing => this.addIngredient(ing, cat.categoryName));
+        });
 
     }
 
@@ -228,9 +232,10 @@ export class ShoppingListCreator {
 
                 }
 
-            }
+            } else {
 
-            this.internalList[categoryName][ing.food + suffix].measure += ing.measure;
+                this.internalList[categoryName][ing.food + suffix].measure += ing.measure;
+            }
         }
         else {
             // add the food item to the list
@@ -244,7 +249,8 @@ export class ShoppingListCreator {
         this.internalList[categoryName][ing.food + suffix] = {
             measure: ing.measure,
             comment: ing.comment,
-            unit: ing.unit
+            unit: ing.unit,
+            fresh: ing.fresh
         };
 
     }
@@ -273,8 +279,8 @@ export class ShoppingListCreator {
                     food: foodName,
                     measure: shoppingListItem.measure,
                     comment: shoppingListItem.comment,
-                    unit: shoppingListItem.unit
-
+                    unit: shoppingListItem.unit,
+                    fresh: shoppingListItem.fresh
                 };
 
                 shoppingListCategory.ingredients.push(ingredient);

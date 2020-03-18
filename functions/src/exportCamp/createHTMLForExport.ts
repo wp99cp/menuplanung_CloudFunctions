@@ -46,7 +46,8 @@ export const createHTML = (camp: ExportedCamp) => {
         // set Dauer
         domElm = document.querySelector('.val-dauer') as Element;
         domElm.innerHTML = new Date(camp.days[0].day_date_as_date).toLocaleDateString('de-CH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Europe/Zurich' }) +
-            ' bis ' + new Date(camp.days[camp.days.length - 1].day_date_as_date).toLocaleDateString('de-CH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Europe/Zurich' });
+            ' bis ' + new Date(camp.days[camp.days.length - 1].day_date_as_date).toLocaleDateString('de-CH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Europe/Zurich' }) +
+            ' (' + camp.days.length + ' Tage)';
 
     }
 
@@ -122,7 +123,7 @@ export const createHTML = (camp: ExportedCamp) => {
      * @param domElm Element to insert ShoppingList
      * @param list ShoppingList
      */
-    const createShoppingList = function (domElm: Element, list: ShoppingList) {
+    const createShoppingList = function (domElm: Element, list: ShoppingList, markProducs = false) {
 
         for (const category of list) {
 
@@ -140,10 +141,20 @@ export const createHTML = (camp: ExportedCamp) => {
 
                 const ingredientTr = document.createElement('tr');
                 ingredientTr.classList.add('ingredient');
+
+                if (markProducs && !ingredient.fresh) {
+                    ingredientTr.classList.add('gary-ingredient');
+                }
+
+                if (!markProducs && ingredient.fresh) {
+                    ingredientTr.classList.add('gary-ingredient');
+                }
+
+
                 ingredientTr.innerHTML = `
-                    <td class="measure var-measure"> `+ ((ingredient.measure !== 0) ? ingredient.measure.toFixed(2) : '') + `  </td>
-                    <td class="unit var-unit"> `+ ingredient.unit + `  </td>
-                    <td class="food var-food"> `+ ingredient.food + `  </td>`;
+                <td class="measure var-measure"> `+ ((ingredient.measure !== 0) ? ingredient.measure.toFixed(2) : '') + `  </td>
+                <td class="unit var-unit"> `+ ingredient.unit + `  </td>
+                <td class="food var-food"> `+ ingredient.food + `  </td>`;
 
                 tbody.appendChild(ingredientTr);
             }
@@ -200,7 +211,8 @@ export const createHTML = (camp: ExportedCamp) => {
                     <span class="ingredient-measure">`+ (ingredient.measure * 1).toFixed(2) + `</span>
                     <span class="ingredient-measure-calc">`+ (ingredient.measure * recipe.recipe_participants).toFixed(2) + `</span>
                     <span class="ingredient-unit">`+ ingredient.unit + `</span>
-                    <span class="ingredient-food">`+ ingredient.food + `</span>`;
+                    <span class="ingredient-food">`+ ingredient.food + `</span>
+                    <span class="ingredient-comment">`+ ingredient.comment + `</span>`;
 
                         ingredientsNode.appendChild(newIngredient);
                     }
@@ -217,8 +229,31 @@ export const createHTML = (camp: ExportedCamp) => {
         }
     };
 
+    const addDayShoppingLists = function () {
+
+        camp.days.forEach(day => {
+
+            // scipps empty shoppingLists
+            if (day.shoppingList.length === 0) {
+                return;
+            }
+
+            const newPage = document.createElement('article');
+            newPage.classList.add('page');
+            newPage.innerHTML = `<h1 class="page-title"> Einkaufsliste `
+                + new Date(day.day_date_as_date).toLocaleDateString('de-CH', { weekday: 'long', month: 'numeric', day: 'numeric', timeZone: 'Europe/Zurich' })
+                + `</h1>`;
+
+            const shoppingListElem = document.createElement('table');
+            shoppingListElem.classList.add('shopping-list');
+            newPage.appendChild(shoppingListElem);
+            createShoppingList(shoppingListElem, day.shoppingList, true);
+            document.body.appendChild(newPage);
 
 
+        });
+
+    }
 
     // Setzt das HTML File zusammen
     setTitlePage();
@@ -226,7 +261,9 @@ export const createHTML = (camp: ExportedCamp) => {
     createWeekView();
 
     const shoppingList = document.querySelector('.shopping-list') as Element;
-    createShoppingList(shoppingList, camp.shoppingList);
+    createShoppingList(shoppingList, camp.shoppingList, false);
+
+    addDayShoppingLists();
 
     addMeals();
 
