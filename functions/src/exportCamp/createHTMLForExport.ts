@@ -200,7 +200,8 @@ export const createHTML = (camp: ExportedCamp) => {
                     <span class="ingredient-measure">`+ (ingredient.measure * 1).toFixed(2) + `</span>
                     <span class="ingredient-measure-calc">`+ (ingredient.measure * recipe.recipe_participants).toFixed(2) + `</span>
                     <span class="ingredient-unit">`+ ingredient.unit + `</span>
-                    <span class="ingredient-food">`+ ingredient.food + `</span>`;
+                    <span class="ingredient-food">`+ ingredient.food + `</span>
+                    <span class="ingredient-comment">`+ ingredient.comment + `</span>`;
 
                         ingredientsNode.appendChild(newIngredient);
                     }
