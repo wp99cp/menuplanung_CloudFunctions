@@ -10,7 +10,8 @@
     "resolveJsonModule": true,
     "moduleResolution": "node",
     "lib": [
-      "es2020"
+      "es2020",
+      "dom"
     ]
   },
   "compileOnSave": true,
