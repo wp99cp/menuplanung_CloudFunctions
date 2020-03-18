@@ -2,6 +2,7 @@ import { db, projectId } from '..';
 import { ExportedCamp, ExportedDay, ExportedMeal, ExportedRecipe } from '../interfaces/exportDatatypes';
 import { FirestoreSpecificMeal, FirestoreSpecificRecipe } from '../interfaces/firestoreDatatypes';
 import { ShoppingListCreator, Categories, Units } from './shopping-list';
+import { firestore } from 'firebase-admin';
 
 export class InvalidDocumentPath extends Error { }
 
@@ -205,7 +206,26 @@ async function loadRecipe(camp: ExportedCamp, recipeRef: FirebaseFirestore.Query
 
 
     // load specificMeal
-    const specificRecipe = (await db.doc('recipes/' + recipeRef.id + '/specificRecipes/' + specificId).get()).data() as FirestoreSpecificRecipe;
+    let specificRecipe = (await db.doc('recipes/' + recipeRef.id + '/specificRecipes/' + specificId).get()).data() as FirestoreSpecificRecipe;
+
+    // the specificRecipe is undefined if the meal never got eddited...
+    // in this case the export function faces the default data.
+    // This only works since there is no group collection query for the specificRecipes...
+    // TODO: allways generate also the specificRecipes on adding a meal to the camp!
+    if (specificRecipe === undefined) {
+
+        specificRecipe = {
+            recipe_used_for: 'all',
+            recipe_override_participants: false,
+            recipe_participants: 0,
+            recipe_specificId: '',
+            used_in_camp: '',
+            access: {},
+            date_added: firestore.FieldValue.serverTimestamp(),
+            date_modified: firestore.FieldValue.serverTimestamp()
+        };
+    }
+
     const recipe = recipeRef.data() as ExportedRecipe;
 
     // calc the participants
@@ -237,6 +257,7 @@ async function createCampShoppingList(camp: ExportedCamp, categories: Categories
 
     // creates the shoppingList
     const shoppingListCreator = new ShoppingListCreator(categories, units);
+    camp.meals_to_prepare.forEach(meal => meal.recipes.forEach(recipe => shoppingListCreator.addRecipe(recipe, false)));
     camp.days.forEach(day => shoppingListCreator.mergeShoppingList(day.shoppingList));
 
     // sets the shoppingList
