@@ -1,5 +1,56 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionGroup": "specificMeals",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "meal_date",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "used_in_camp",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "specificMeals",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "meal_gets_prepared",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "meal_prepare_date",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "used_in_camp",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "specificMeals",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "meal_gets_prepared",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "used_in_camp",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "meal_prepare_date",
+          "order": "ASCENDING"
+        }
+      ]
+    }
+  ],
   "fieldOverrides": [
     {
       "collectionGroup": "meals",
@@ -54,6 +105,50 @@
       ]
     },
     {
+      "collectionGroup": "specificMeals",
+      "fieldPath": "meal_id",
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "arrayConfig": "CONTAINS",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "specificMeals",
+      "fieldPath": "used_in_camp",
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "arrayConfig": "CONTAINS",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        }
+      ]
+    },
+    {
       "collectionGroup": "specificRecipes",
       "fieldPath": "campId",
       "indexes": [
@@ -85,6 +180,28 @@
     },
     {
       "collectionGroup": "specificRecipes",
+      "fieldPath": "recipe_specificId",
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "arrayConfig": "CONTAINS",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "specificRecipes",
       "fieldPath": "specificMealId",
       "indexes": [
         {
@@ -109,6 +226,28 @@
         },
         {
           "arrayConfig": "CONTAINS",
+          "queryScope": "COLLECTION_GROUP"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "specificRecipes",
+      "fieldPath": "used_in_camp",
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "arrayConfig": "CONTAINS",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "ASCENDING",
           "queryScope": "COLLECTION_GROUP"
         }
       ]

@@ -201,7 +201,8 @@ export const createHTML = (camp: ExportedCamp) => {
                  <span class="ingredient-measure">1 Per.</span>
                  <span class="ingredient-measure-calc"> ` + recipe.recipe_participants + ` Per. </span>
                  <span class="ingredient-unit"></span>
-                 <span class="ingredient-food">Lebensmittel</span></div>`;
+                 <span class="ingredient-food">Lebensmittel</span>
+                 <span class="ingredient-comment"></span></div>`;
 
                     for (const ingredient of recipe.ingredients) {
 
