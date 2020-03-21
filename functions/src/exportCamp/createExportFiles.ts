@@ -169,7 +169,7 @@ async function saveAsPDF(page: any, filePath: string, callback: any) {
     const printOptions = {
         printBackground: true,
         format: "A4",
-        margin: { top: "2cm", right: "1.75cm", bottom: "2.5cm", left: "1.75cm" },
+        margin: { top: "2cm", right: "1.75cm", bottom: "2.5cm", left: "1.75cm" }
     };
 
     // create a pdf with the custom print settings

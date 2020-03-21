@@ -190,7 +190,7 @@ export const createHTML = (camp: ExportedCamp) => {
                     newRecipe.innerHTML = `
                 <h2 class="recipe-name">`+ recipe.recipe_name + `</h2>
                 <span class="recipe-description">`+ recipe.recipe_notes + `</span>
-                <span class="recipe-vegi-info">`+ recipe.recipe_used_for + ` ( ` + recipe.recipe_participants + ` Personen)</span>
+                <span class="recipe-vegi-info">`+ recipe.recipe_used_for + ` (` + recipe.recipe_participants + ` Personen)</span>
                 <span class="recipe-notes">` + recipe.recipe_notes + `</span>`;
 
                     const ingredientsNode = document.createElement('div');
