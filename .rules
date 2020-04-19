@@ -13,26 +13,39 @@ service cloud.firestore {
 
     // check's if the user has access to this document
     function hasAccess() {
+        return resource.data.access[request.auth.uid] in ['editor', 'owner', 'collaborator' , 'viewer'];
+    }
 
-        return resource.data.access[request.auth.uid] in ['owner', 'editor'];
-
+    // check's if the user has access to this document
+    function canWrite() {
+        return resource.data.access[request.auth.uid] in ['editor', 'owner', 'collaborator'];
     }
 
     // check's if the user is the owner of this document
     function isOwner(data) {
-
         return data.access[request.auth.uid] == 'owner';
+    }
 
+    // check's if the user has a certain rule
+    function hasRule(data, rule) {
+        return data.access[request.auth.uid] == rule;
     }
 
     // checks if the access property got changed and whether he is allowed to do this
     function checkAccessChanges(){
 
+        // TODO: Berechtigungen sind heikel, daher soll diese Funktion in Zukunft
+        // in einer Cloud-Function geregelt werden. Der Client darf und soll nichts
+        // mehr an der Berechtigungen verändern dürfen.
+
         return
             // nothing changed in access data
             request.resource.data.access == resource.data.access ||
-            // only owners can change access data and only afterwards at least on owner exist
-            (hasAccess() && 'owner' in request.resource.data.access.values());
+            
+            // only owners and editors can change access data
+            ((hasRule(resource.data, 'editor') || hasRule(resource.data, 'owner')) 
+            // after the change at least one owner must exist in the access data field
+             && 'owner' in request.resource.data.access.values());
 
 
     }
@@ -82,6 +95,8 @@ service cloud.firestore {
                 // participants fields are numbers
                 request.resource.data.camp_participants is number &&
                 request.resource.data.camp_vegetarians is number &&
+                request.resource.data.camp_leaders is number &&
+
                 // has name
                 request.resource.data.camp_name.size() > 0;
 
@@ -90,7 +105,7 @@ service cloud.firestore {
         // every auth user can create camps on which he has access
         allow create: if isAuth() && isOwner(request.resource.data) && validChanges();
 
-        allow update: if hasAccess() && checkAccessChanges() && validChanges();
+        allow update: if canWrite() && checkAccessChanges() && validChanges();
         allow list, get: if hasAccess();
         allow delete: if isOwner(resource.data);
 
@@ -135,7 +150,7 @@ service cloud.firestore {
 
         allow create: if isAuth() && isOwner(request.resource.data) && validChanges();
         allow list, get: if hasAccess();
-        allow update: if hasAccess() && checkAccessChanges() && validChanges();
+        allow update: if canWrite() && checkAccessChanges() && validChanges();
         allow delete: if isOwner(resource.data);
 
 
@@ -152,8 +167,8 @@ service cloud.firestore {
             // TODO: add verification or access rules
             allow create:  if isAuth() && validChanges();
             allow get, list;
-            allow update: if validChanges();
-            allow delete;
+            allow update: if  canWrite() && validChanges();
+            allow delete: if isOwner(resource.data);
 
         }
 
@@ -170,7 +185,7 @@ service cloud.firestore {
 
             allow create: if isAuth() && isOwner(request.resource.data) && validChanges();
             allow list, get: if hasAccess();
-            allow update: if hasAccess() && checkAccessChanges() && validChanges();
+            allow update: if canWrite() && checkAccessChanges() && validChanges();
             allow delete: if isOwner(resource.data);
 
 
@@ -187,8 +202,8 @@ service cloud.firestore {
                 // TODO: add verification or access rules
                 allow create:  if isAuth() && validChanges();
                 allow get, list; // list is not allowed
-                allow update: if validChanges();
-                allow delete;
+                allow update: if  canWrite() && validChanges();
+                allow delete: if isOwner(resource.data);
 
             }
 

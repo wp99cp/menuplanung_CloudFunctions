@@ -33,15 +33,36 @@ export const createHTML = (camp: ExportedCamp) => {
      */
     const createInfoPage = function () {
 
-        // set Vegis and participants
+        // set Vegis, leaders and participants
         let domElm = document.querySelector('.val-vegis') as Element;
         domElm.innerHTML = camp.camp_vegetarians.toString();
+
+        domElm = document.querySelector('.val-leaders') as Element;
+        domElm.innerHTML = camp.camp_leaders.toString();
+
         domElm = document.querySelector('.val-participants') as Element;
         domElm.innerHTML = camp.camp_participants.toString();
 
         // set camp description 
         domElm = document.querySelector('.val-description') as Element;
         domElm.innerHTML = camp.camp_description;
+
+        // set camp description 
+        domElm = document.querySelector('.page-title') as Element;
+        domElm.innerHTML = camp.camp_name;
+
+        let innerHTMLStr = '';
+
+        for (const day of camp.days) {
+
+            innerHTMLStr += '- ' + new Date(day.day_date_as_date).toLocaleDateString('de-CH', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'Europe/Zurich' });
+            innerHTMLStr += day.day_notes !== '' ? ': ' + day.day_notes : '';
+            innerHTMLStr += '<br>';
+
+        }
+
+        domElm = document.querySelector('.days-notes') as Element;
+        domElm.innerHTML = innerHTMLStr;
 
         // set Dauer
         domElm = document.querySelector('.val-dauer') as Element;
@@ -104,9 +125,9 @@ export const createHTML = (camp: ExportedCamp) => {
                 innerHTMLStr += addMealsToWeekView(day.meals.filter(meal => (meal.meal_used_as === mealUsage)))
             }
 
-            innerHTMLStr += '<th><p>'
+            innerHTMLStr += '<th><p style="height: calc((100vh - 380px) / ' + (camp.days.length + 1) + ');">'
                 + new Date(day.day_date_as_date).toLocaleDateString('de-CH', { weekday: 'short', month: 'numeric', day: 'numeric', timeZone: 'Europe/Zurich' })
-                + '</p></th></tr>';
+                + '<br>' + day.day_description + '</p></th></tr>';
 
         }
 

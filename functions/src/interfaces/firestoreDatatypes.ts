@@ -48,6 +48,7 @@ export interface DayData {
 
   day_date: admin.firestore.Timestamp;
   day_description: string;
+  day_notes: string;
 
 }
 

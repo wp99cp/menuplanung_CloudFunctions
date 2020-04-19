@@ -4,6 +4,7 @@ import { cloudFunction, createCallableCloudFunc } from './CloudFunction';
 import { createExportFiles } from './exportCamp/createExportFiles';
 import { onDeleteCamp } from './onDeleteCamp';
 import { onUserCreation } from './onUserCreation';
+import { onDeleteSpecificMeal } from './onDeleteSpecificMeal';
 
 // Use to set correct projectId and serviceAccount for the database
 // the correct one is automaticaly set by the GClOUD_PROJECT name.
@@ -28,6 +29,9 @@ export const db = admin.firestore();
 exports.newUserCreated = cloudFunction().auth.user().onCreate(onUserCreation());
 exports.createPDF = createCallableCloudFunc(createExportFiles, "2GB");
 exports.deleteCamp = cloudFunction().firestore.document('camps/{campId}').onDelete(onDeleteCamp);
+
+exports.deleteSpecificMeal = cloudFunction().firestore.document('meals/{mealId}/specificMeals/{specificID}').onDelete(onDeleteSpecificMeal);
+
 
 exports.checkForOldExports = createCallableCloudFunc(async () => {
 
