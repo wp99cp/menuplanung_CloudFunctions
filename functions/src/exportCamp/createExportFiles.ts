@@ -30,6 +30,7 @@ export async function createExportFiles(requestData: { campId: string }): Promis
     const page = await browser.newPage();
 
     // loads the template html from the template folder
+    // TODO: auto-upload html datei (or copy file from src to lib folder on upload...)
     await page.goto('file://' + __dirname + '/templates/lagerhandbuch.html');
     // use print media for print css
     await page.emulateMedia("print");

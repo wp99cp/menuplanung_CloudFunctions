@@ -13,6 +13,9 @@ service cloud.firestore {
 
     // check's if the user has access to this document
     function hasAccess() {
+
+        // TODO: Achtung nicht alle Elemente haben die selben Berechtigungen.
+
         return resource.data.access[request.auth.uid] in ['editor', 'owner', 'collaborator' , 'viewer'];
     }
 
@@ -86,7 +89,7 @@ service cloud.firestore {
     }
 
 
-    // camps colelction
+    // camps collection
     match /camps/{campID} {
 
         function validChanges(){
@@ -166,7 +169,7 @@ service cloud.firestore {
 
             // TODO: add verification or access rules
             allow create:  if isAuth() && validChanges();
-            allow get, list;
+            allow get, list; // TODO: addd rules
             allow update: if  canWrite() && validChanges();
             allow delete: if isOwner(resource.data);
 
@@ -189,7 +192,6 @@ service cloud.firestore {
             allow delete: if isOwner(resource.data);
 
 
-
             // specific recipes
              match /specificRecipes/{specificRecipeID} {
  
@@ -199,9 +201,8 @@ service cloud.firestore {
 
                 }
 
-                // TODO: add verification or access rules
                 allow create:  if isAuth() && validChanges();
-                allow get, list; // list is not allowed
+                allow get, list; // TODO: addd rules
                 allow update: if  canWrite() && validChanges();
                 allow delete: if isOwner(resource.data);
 

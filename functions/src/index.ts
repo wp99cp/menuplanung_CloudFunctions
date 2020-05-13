@@ -32,6 +32,12 @@ exports.deleteCamp = cloudFunction().firestore.document('camps/{campId}').onDele
 
 exports.deleteSpecificMeal = cloudFunction().firestore.document('meals/{mealId}/specificMeals/{specificID}').onDelete(onDeleteSpecificMeal);
 
+// TODO: Möglichkeit zum Export aus der Datenbank, aber nur mit richtiger Berechtigung...
+// -> Ziel ist es, dass ein Python Skript täglich ein Backup auf den Ronaldo spielt (via. Raspberry).
+// Dieses backup kann bei Bedarf wieder in die Datenbank eingespielt werden, ebenfalls per Python Skript.
+// Für beides ein Passwort nötig? Dieses Passowert in einer .pass datei speichern und mit einer Hash-Verschlüsselung
+// (einweg) schützen? ... Hash Code wird hier in der Cloud-Funktion entschlüsselt... so kann ein Angreifer auf 
+// das Raspberry die Funktion (restore) nihct missbrauchen...
 
 exports.checkForOldExports = createCallableCloudFunc(async () => {
 

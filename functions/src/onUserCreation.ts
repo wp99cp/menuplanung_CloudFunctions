@@ -5,6 +5,8 @@ import { firestore } from "firebase-admin";
  * 
  * This function creates for the user a new document "users/{userId}".
  * 
+ * // TODO: add a field: {'newUser' : true}
+ * 
  * @param user User for which the doc should get created
  * 
  */
