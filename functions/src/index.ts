@@ -1,13 +1,16 @@
 import * as admin from 'firebase-admin';
+import * as functions from 'firebase-functions';
 
-import { cloudFunction, createCallableCloudFunc } from './CloudFunction';
-import { createExportFiles } from './exportCamp/createExportFiles';
-import { onDeleteCamp } from './onDeleteCamp';
-import { onUserCreation } from './onUserCreation';
-import { onDeleteSpecificMeal } from './onDeleteSpecificMeal';
+import {cloudFunction, createCallableCloudFunc} from './CloudFunction';
+import {createExportFiles} from './exportCamp/createExportFiles';
+import {onDeleteCamp} from './onDeleteCamp';
+import {onUserCreation} from './onUserCreation';
+import {onDeleteSpecificMeal} from './onDeleteSpecificMeal';
+
+const client = new admin.firestore.v1.FirestoreAdminClient();
 
 // Use to set correct projectId and serviceAccount for the database
-// the correct one is automaticaly set by the GClOUD_PROJECT name.
+// the correct one is automatically set by the GClOUD_PROJECT name.
 export const projectId = process.env.GCLOUD_PROJECT as string;
 export const serviceAccount = require("../keys/" + projectId + "-firebase-adminsdk.json");
 
@@ -32,35 +35,112 @@ exports.deleteCamp = cloudFunction().firestore.document('camps/{campId}').onDele
 
 exports.deleteSpecificMeal = cloudFunction().firestore.document('meals/{mealId}/specificMeals/{specificID}').onDelete(onDeleteSpecificMeal);
 
-// TODO: Möglichkeit zum Export aus der Datenbank, aber nur mit richtiger Berechtigung...
-// -> Ziel ist es, dass ein Python Skript täglich ein Backup auf den Ronaldo spielt (via. Raspberry).
-// Dieses backup kann bei Bedarf wieder in die Datenbank eingespielt werden, ebenfalls per Python Skript.
-// Für beides ein Passwort nötig? Dieses Passowert in einer .pass datei speichern und mit einer Hash-Verschlüsselung
-// (einweg) schützen? ... Hash Code wird hier in der Cloud-Funktion entschlüsselt... so kann ein Angreifer auf 
-// das Raspberry die Funktion (restore) nihct missbrauchen...
+// Name of the backup bucket
+const bucket_backup = projectId === 'cevizh11' ? 'gs://backup-bucket-firebase' : 'gs://backup-bucket-firebase-prod';
 
-exports.checkForOldExports = createCallableCloudFunc(async () => {
+/**
+ * Backups the database and saves it in a backup bucket.
+ *
+ */
+exports.scheduledFirestoreExport = functions
+    .region('europe-west1')
+    // At 23:30 on Friday.
+    .pubsub.schedule('30 23 * * 5')
+    .timeZone('Europe/Zurich')
+    .onRun(async (context) => {
 
-    // Check docs in 'exports' collection
-    (await db.collectionGroup('exports/{exportId}').get()).docs.forEach(docRef => {
+        const databaseName =
+            client.databasePath(projectId, '(default)');
 
-        const docData = docRef.data();
+        return client.exportDocuments({
+            name: databaseName,
+            outputUriPrefix: bucket_backup,
+            // Leave collectionIds empty to export all collections
+            // or set to a list of collection IDs to export,
+            // collectionIds: ['users', 'posts']
+            collectionIds: []
+        }).then(async (responses: any[]) => {
 
-        // TODO: Check date
+            const response = responses[0];
 
-        // Deletes the files
-        deletesDocsFromExport(docData);
+            // add date of last backup
+            await db.doc('/sharedData/statistics').update({
+                last_backup_created: admin.firestore.FieldValue.serverTimestamp()
+            })
 
-    })
+            console.log(`Operation Name: ${response['name']}`);
+        }).catch((err: any) => {
+            console.error(err);
+            throw new Error('Export operation failed');
+        });
+    });
 
-    return { data: 'Successfully deleted old exports.' };
+/**
+ * Resets the weekly counters.
+ * And saves it in the old_week field of the statistics document.
+ *
+ */
+exports.createWeeklyReport = functions
+    .region('europe-west1')
+    // At 00:00 on Saturday.
+    .pubsub.schedule('0 0 * * 6')
+    .timeZone('Europe/Zurich')
+    .onRun(async () => {
 
-});
+        const statistics = (await db.doc('/sharedData/statistics').get()).data();
+
+        // reset weekly statistic counters
+        await db.doc('/sharedData/statistics').update({
+            removed_old_exports: 0,
+            old_week: {
+                removed_old_exports: statistics?.removed_old_exports
+            }
+        })
+
+    });
+
+/**
+ * Checks for old exports.
+ * Delete the firestore document and the corresponding documents in the bucket.
+ *
+ */
+exports.checkForOldExports = functions
+    .region('europe-west1')
+    // At 23:00 on Friday.
+    .pubsub.schedule('0 23 * * 5')
+    .timeZone('Europe/Zurich')
+    .onRun(async () => {
+
+        // Check docs in 'exports' collection
+        (await db.collectionGroup('exports').get())
+            .docs.forEach(docRef => {
+
+            const docData = docRef.data();
+
+            const now = new Date();
+            if (docData.expiryDate.toMillis() <= now) {
+                // Deletes the files
+                deletesDocsFromExport(docData);
+
+                docRef.ref.delete().catch();
+                db.doc('/sharedData/statistics').update({
+                    removed_old_exports: admin.firestore.FieldValue.increment(1)
+                }).catch();
+
+                console.log('Delete old document!')
+
+            } else
+                console.log('Check for old documents... but none found!')
+        })
+
+        return {data: 'Successfully deleted old exports.'};
+
+    });
 
 
 /**
  * If a firestore object of an export gets deleted, this function deletes the corresponding files in the storage
- * 
+ *
  */
 exports.deleteExports = cloudFunction().firestore.document('camps/{campId}/exports/{exportId}').onDelete((snapshot) => {
 
@@ -77,14 +157,15 @@ exports.deleteExports = cloudFunction().firestore.document('camps/{campId}/expor
 
 
 /**
- * 
- * @param docData 
+ *
+ * @param docData
  */
 function deletesDocsFromExport(docData: FirebaseFirestore.DocumentData) {
 
     const path = docData.path;
-    docData.docs.forEach((fileType: string) => admin.storage().bucket(projectId + '.appspot.com')
-        .file(path + '.' + fileType).delete());
+    docData.docs.forEach((fileType: string) =>
+        admin.storage().bucket(projectId + '.appspot.com')
+            .file(path + '.' + fileType).delete().catch());
 
 }
 

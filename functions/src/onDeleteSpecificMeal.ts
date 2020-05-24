@@ -19,10 +19,10 @@ export async function onDeleteSpecificMeal(snapshot: FirebaseFirestore.DocumentS
     const specificMeal: FirestoreSpecificMeal = snapshot.data() as FirestoreSpecificMeal;
     const specificMealsRefs = db.collectionGroup('specificMeals').where('used_in_camp', '==', specificMeal.used_in_camp).get();
 
-    if ((await specificMealsRefs).docs.length == 0) {
+    if ((await specificMealsRefs).docs.length === 0) {
 
         const path = snapshot.ref.parent.parent?.path;
-        if (path == undefined)
+        if (path === undefined)
             throw new Error();
         
         db.doc(path).update({
