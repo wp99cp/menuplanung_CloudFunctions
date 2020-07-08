@@ -94,6 +94,9 @@ export class ShoppingListCreator {
                 ing.food += ' (Frischprod.)';
             }
 
+            // Remove heading/tailing space
+            ing.food = ing.food.trim();
+
             // adds ingredient
             this.addIngredient(ing, catName);
 
