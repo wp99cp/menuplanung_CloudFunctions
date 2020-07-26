@@ -6,6 +6,7 @@ import {createExportFiles} from './exportCamp/createExportFiles';
 import {onDeleteCamp} from './onDeleteCamp';
 import {onUserCreation} from './onUserCreation';
 import {onDeleteSpecificMeal} from './onDeleteSpecificMeal';
+import {importMeal} from "./importMeal";
 
 const client = new admin.firestore.v1.FirestoreAdminClient();
 
@@ -30,6 +31,9 @@ export const db = admin.firestore();
 ////////////////////////////////////
 
 exports.newUserCreated = cloudFunction().auth.user().onCreate(onUserCreation());
+
+exports.importMeal = createCallableCloudFunc(importMeal, "1GB");
+
 exports.createPDF = createCallableCloudFunc(createExportFiles, "2GB");
 exports.deleteCamp = cloudFunction().firestore.document('camps/{campId}').onDelete(onDeleteCamp);
 
