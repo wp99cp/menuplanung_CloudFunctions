@@ -1,20 +1,21 @@
-import { db, projectId } from '..';
-import { ExportedCamp, ExportedDay, ExportedMeal, ExportedRecipe } from '../interfaces/exportDatatypes';
-import { FirestoreSpecificMeal, FirestoreSpecificRecipe } from '../interfaces/firestoreDatatypes';
-import { ShoppingListCreator, Categories, Units } from './shopping-list';
-import { firestore } from 'firebase-admin';
+import {db, projectId} from '..';
+import {ExportedCamp, ExportedDay, ExportedMeal, ExportedRecipe} from '../interfaces/exportDatatypes';
+import {FirestoreSpecificMeal, FirestoreSpecificRecipe} from '../interfaces/firestoreDatatypes';
+import {Categories, ShoppingListCreator, Units} from './shopping-list';
+import {firestore} from 'firebase-admin';
 
-export class InvalidDocumentPath extends Error { }
+export class InvalidDocumentPath extends Error {
+}
 
 /**
- * 
+ *
  * Exports all infos for a camp. This function is called to export the camp as
  * a "Lagerhandbuch". It contains all the data about a camp and could also be used
  * to export and re-import a camp to the database (not yet implemented).
- * 
+ *
  * @param campId contains the id of the camp
  * @returns all the date of the camp as an ExportedCamp object
- * 
+ *
  */
 export async function exportCamp(campId: string): Promise<ExportedCamp> {
 
@@ -40,9 +41,9 @@ export async function exportCamp(campId: string): Promise<ExportedCamp> {
 /**
  * Loads the document of the camp "camps/{campId}".
  * Sorts the "camp.days" of the camp in the proper order (by date).
- * 
+ *
  * @param campData the content of the document of the camp
- * 
+ *
  */
 async function loadCamp(campId: string): Promise<ExportedCamp> {
 
@@ -71,11 +72,11 @@ async function loadCamp(campId: string): Promise<ExportedCamp> {
  * Loads the data of the days.
  * Loads the meal, specificMeal, recipes and specificRecipes
  * and sets this data as a ExportedDay to the camp.days field.
- * 
- * 
+ *
+ *
  * @param camp ExportedCamp as object
  * @returns a void Promise which resolves after loading data
- * 
+ *
  */
 async function loadDays(camp: ExportedCamp, categories: Categories, units: Units): Promise<void> {
 
@@ -97,14 +98,14 @@ async function loadDays(camp: ExportedCamp, categories: Categories, units: Units
 }
 
 /**
- * 
+ *
  * Loads the meals of a ExportedDay in a ExportedCamp.
  * This function needs a "COLLECTION_GROUP_ASC index".
  * But it's the same as in the frontend.
- * 
+ *
  * @param camp ExportedCamp
  * @param day ExportedDay
- * 
+ *
  */
 async function loadDay(camp: ExportedCamp, day: ExportedDay, categories: Categories, units: Units): Promise<ExportedDay> {
 
@@ -138,14 +139,14 @@ async function loadDay(camp: ExportedCamp, day: ExportedDay, categories: Categor
 }
 
 /**
-* 
-* CompareFn to sort meals by date and then by it's "usedAs" Value
-* After this sorting the meals are in the proper order,
-* i.e. the order in which they get cooked in the camp.
-*     
-* @param meals list of meals to sort
-* 
-*/
+ *
+ * CompareFn to sort meals by date and then by it's "usedAs" Value
+ * After this sorting the meals are in the proper order,
+ * i.e. the order in which they get cooked in the camp.
+ *
+ * @param meals list of meals to sort
+ *
+ */
 function mealCompareFn(a: ExportedMeal, b: ExportedMeal) {
 
     const orderOfMahlzeiten = ['Zmorgen', 'Znüni', 'Zmittag', 'Zvieri', 'Znacht', 'Leitersnack', 'Vorbereiten'];
@@ -162,11 +163,11 @@ function mealCompareFn(a: ExportedMeal, b: ExportedMeal) {
 }
 
 /**
- * 
+ *
  * Loads the meal and combine it with the specificMeal to the ExportedMeal
- * 
- * @param day 
- * @param specificMealRef 
+ *
+ * @param day
+ * @param specificMealRef
  */
 async function loadMeal(camp: ExportedCamp, specificMealRef: FirebaseFirestore.QueryDocumentSnapshot):
     Promise<ExportedMeal> {
@@ -193,13 +194,13 @@ async function loadMeal(camp: ExportedCamp, specificMealRef: FirebaseFirestore.Q
 }
 
 /**
- * 
- * 
- * 
- * @param camp 
- * @param day 
- * @param recipeRef 
- * @param specificId 
+ *
+ *
+ *
+ * @param camp
+ * @param day
+ * @param recipeRef
+ * @param specificId
  */
 async function loadRecipe(camp: ExportedCamp, recipeRef: FirebaseFirestore.QueryDocumentSnapshot, specificId: string, meal: ExportedMeal):
     Promise<ExportedRecipe> {
@@ -234,23 +235,39 @@ async function loadRecipe(camp: ExportedCamp, recipeRef: FirebaseFirestore.Query
     // or set the user group...
     recipe.recipe_used_for = specificRecipe.recipe_used_for;
     switch (recipe.recipe_used_for) {
-        case 'leaders': recipe.recipe_participants = camp.camp_leaders; break;
-        case 'vegetarians': recipe.recipe_participants = camp.camp_vegetarians; break;
-        case 'non-vegetarians': recipe.recipe_participants -= camp.camp_vegetarians; break;
+        case 'leaders':
+            recipe.recipe_participants = camp.camp_leaders;
+            break;
+        case 'vegetarians':
+            recipe.recipe_participants = camp.camp_vegetarians;
+            break;
+        case 'non-vegetarians':
+            recipe.recipe_participants -= camp.camp_vegetarians;
+            break;
     }
+
+    // Check all ingredient fields
+    // This step is necessary since some fields are missing, when an recipe gets imported and never edited...
+    recipe.ingredients.forEach(ing => {
+        ing.measure = ing.measure ? ing.measure : 0;
+        ing.fresh = ing.fresh ? ing.fresh : false;
+        ing.comment = ing.comment ? ing.comment : '';
+        ing.food = ing.food ? ing.food : '';
+        ing.unit = ing.unit ? ing.unit : '';
+    });
 
     return recipe;
 }
 
 /**
- * 
+ *
  * Creates a shoppingList from the ExportedCamp.
  * If the day data hasn't been loaded yet, this function results
  * in an empty shoppingList.
- * 
+ *
  * @param camp ExportedCamp as object
  * @returns a void Promise which resolves after creating the shoppingList
- * 
+ *
  */
 async function createCampShoppingList(camp: ExportedCamp, categories: Categories, units: Units): Promise<void> {
 
@@ -266,14 +283,14 @@ async function createCampShoppingList(camp: ExportedCamp, categories: Categories
 }
 
 /**
- * 
+ *
  * Creates a shoppingList from the provided Day.
  * If the day data hasn't been loaded yet, this function results
  * in an empty shoppingList.
- * 
+ *
  * @param camp ExportedCamp as object
  * @returns a void Promise which resolves after creating the shoppingList
- * 
+ *
  */
 async function createDayShoppingList(day: ExportedDay, categories: Categories, units: Units): Promise<void> {
 
@@ -289,7 +306,6 @@ async function createDayShoppingList(day: ExportedDay, categories: Categories, u
     // add the meals which get prepared on this day
     day.meals_to_prepare.forEach(meal => meal.recipes.forEach(recipe =>
         shoppingListCreator.addRecipe(recipe))
-
     );
 
     // sets the shoppingList

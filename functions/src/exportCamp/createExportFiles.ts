@@ -1,16 +1,30 @@
 import admin = require('firebase-admin');
+import {db, projectId} from '..';
+import {createHTML} from './createHTMLForExport';
+import {exportCamp as exportCamp} from './exportData';
+import {ResponseData} from '../CloudFunction';
+import {ExportedCamp} from '../interfaces/exportDatatypes';
+import {Ingredient} from '../interfaces/firestoreDatatypes';
 
-import { db, projectId } from '..';
-import { createHTML } from './createHTMLForExport';
-import { exportCamp as exportCamp } from './exportData';
-import { ResponseData } from '../CloudFunction';
-import { ExportedCamp } from '../interfaces/exportDatatypes';
-import { Ingredient } from '../interfaces/firestoreDatatypes';
+/*
+
+// Used for local testing
+console.log('Launch createExportFiles...')
+console.log()
+createExportFiles({campId: "hykCWTWtw7U9jhkqpSQI"})
+    .then(res => {
+        console.log(res)
+        console.log();
+        console.log('End createExportFiles')
+    });
+
+*/
+
 
 /**
- * 
+ *
  * Saves a PDF to the cloudStorage.
- * 
+ *
  * This function creates a PDF as the Lagerhandbuch for the campId in the requestData object
  * using puppeteer and an headless chrome instance to print a static html page filled in with
  * the exportedData form the requested camp.
@@ -26,7 +40,7 @@ export async function createExportFiles(requestData: { campId: string }): Promis
     // start creating the pdf with puppeteer
     // creating a new instance of an headless chrome browser to print the document
     // and save it as a PDF in the cloudStorage
-    const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
+    const browser = await puppeteer.launch({args: ['--no-sandbox']});
     const page = await browser.newPage();
 
     // loads the template html from the template folder
@@ -66,11 +80,11 @@ export async function createExportFiles(requestData: { campId: string }): Promis
 }
 
 /**
- * 
+ *
  * Writes the info about the export to the collection 'exports' of the
  * camp with the given campId.
- * 
- * @param campId Id of the exported camp 
+ *
+ * @param campId Id of the exported camp
  * @param filePath unique file path to the exported files
  */
 async function addDocInExportCollection(campId: string, filePath: string): Promise<FirebaseFirestore.DocumentSnapshot> {
@@ -90,37 +104,44 @@ async function addDocInExportCollection(campId: string, filePath: string): Promi
 
 /**
  * Saves the html content of the current Page as HTML
- * 
+ *
  * @param page currentPage
  * @param filePath path where the file should get saved
  */
 async function saveAsHTML(page: any, filePath: string) {
 
-    const html = await page.evaluate(() => { return (document.body.parentElement as HTMLElement).innerHTML; });
+    const html = await page.evaluate(() => {
+        return (document.body.parentElement as HTMLElement).innerHTML;
+    });
 
     const htmlFile = getCloudStorage().file(filePath + '.html');
-    const fileMetadata = { contentType: 'application/html' };
-    htmlFile.save(html, fileMetadata, (err) => { console.log(err); });
+    const fileMetadata = {contentType: 'application/html'};
+    htmlFile.save(html, fileMetadata, (err) => {
+        console.log(err);
+    });
 
 }
 
 
 /**
  * Saves the shoppingList as an CSV
- * 
+ *
  * @param page currentPage
  * @param filePath path where the file should get saved
  */
 async function saveAsCSV(camp: ExportedCamp, filePath: string) {
 
-    const { Parser } = require('json2csv');
+    const {Parser} = require('json2csv');
     const fields = ['measure', 'unit', 'food', 'comment', 'category'];
 
     // "withBOM" for utf-8 in Excel && "eol" for open with Excel
-    const opts = { fields, withBOM: true, eol: "\r\n", delimiter: ";" };
+    const opts = {fields, withBOM: true, eol: "\r\n", delimiter: ";"};
 
     // convert shopping list to an array
-    interface ExtendedIngredient extends Ingredient { category: string }
+    interface ExtendedIngredient extends Ingredient {
+        category: string
+    }
+
     const list: ExtendedIngredient[] = [];
     camp.shoppingList.forEach(cat => cat.ingredients.forEach(ing => {
 
@@ -135,17 +156,19 @@ async function saveAsCSV(camp: ExportedCamp, filePath: string) {
     const csv = parser.parse(list);
 
     const csvFile = getCloudStorage().file(filePath + '.csv');
-    const fileMetadata = { contentType: 'application/csv' };
-    csvFile.save(csv, fileMetadata, (err) => { console.log(err); });
+    const fileMetadata = {contentType: 'application/csv'};
+    csvFile.save(csv, fileMetadata, (err) => {
+        console.log(err);
+    });
 
 }
 
 /**
  * creates the unique fileName
- *  
- * @param campId the Id of the camp in the firebase database 
+ *
+ * @param campId the Id of the camp in the firebase database
  * @returns the filePath to the created fileName
- * 
+ *
  */
 function generatingFileName(campId: string) {
 
@@ -157,7 +180,7 @@ function generatingFileName(campId: string) {
 
 /**
  * Creates a pdf from a webpage using puppeteer
- * 
+ *
  * @param page page to take create a pdf from
  * @param filePath path to the file
  * @param callback the SaveCallback function which gets called after the file has been saved
@@ -170,7 +193,7 @@ async function saveAsPDF(page: any, filePath: string, callback: any) {
     const printOptions = {
         printBackground: true,
         format: "A4",
-        margin: { top: "2cm", right: "1.75cm", bottom: "2.5cm", left: "1.75cm" }
+        margin: {top: "2cm", right: "1.75cm", bottom: "2.5cm", left: "1.75cm"}
     };
 
     // create a pdf with the custom print settings
@@ -178,15 +201,15 @@ async function saveAsPDF(page: any, filePath: string, callback: any) {
 
     // saves the file in the cloudStorage
     const pdfFile = getCloudStorage().file(filePath + '.pdf');
-    const fileMetadata = { contentType: 'application/pdf' };
+    const fileMetadata = {contentType: 'application/pdf'};
     pdfFile.save(pdfBuffer, fileMetadata, callback);
 
 }
 
 /**
- * 
+ *
  * @returns the default bucket (the cloudStorage) of the current project.
- * 
+ *
  */
 function getCloudStorage() {
 

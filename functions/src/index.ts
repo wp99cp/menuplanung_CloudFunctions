@@ -13,7 +13,7 @@ const client = new admin.firestore.v1.FirestoreAdminClient();
 // Use to set correct projectId and serviceAccount for the database
 // the correct one is automatically set by the GClOUD_PROJECT name.
 export const projectId = process.env.GCLOUD_PROJECT as string;
-export const serviceAccount = require("../keys/" + projectId + "-firebase-adminsdk.json");
+export const serviceAccount = require("../keys/" + projectId ? projectId : 'cevizh11' + "-firebase-adminsdk.json");
 
 // connect to firebase firestore database
 admin.initializeApp({
@@ -93,13 +93,15 @@ exports.createWeeklyReport = functions
 
         const statistics = (await db.doc('/sharedData/statistics').get()).data();
 
-        // reset weekly statistic counters
-        await db.doc('/sharedData/statistics').update({
-            removed_old_exports: 0,
-            old_week: {
-                removed_old_exports: statistics?.removed_old_exports
-            }
-        })
+        if (statistics) {
+            // reset weekly statistic counters
+            await db.doc('/sharedData/statistics').update({
+                removed_old_exports: 0,
+                old_week: {
+                    removed_old_exports: statistics.removed_old_exports
+                }
+            })
+        }
 
     });
 
