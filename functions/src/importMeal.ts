@@ -1,15 +1,16 @@
+
 /*
 
 // Used for local testing
+// Execute with the following command: tsc functions/src/importMeal.ts && node functions/src/importMeal.js
 console.log('Launch importMeal...')
 console.log()
-importMeal({url: "https://fooby.ch/de/rezepte/18597/randenbrot?startAuto1=4"})
+importMeal({url: "https://www.swissmilk.ch/de/rezepte-kochideen/rezepte/SM2020_DIVE_08/linsen-dal-mit-suesskartoffeln-und-joghurt/"})
     .then(res => {
         console.log(JSON.stringify(res));
         console.log();
         console.log('End importMeal')
     });
-
 */
 
 export async function importMeal(requestData: { url: string }): Promise<any> {
@@ -48,7 +49,40 @@ export async function importMeal(requestData: { url: string }): Promise<any> {
 
 }
 
+/**
+ *
+ * Removes fractions from the measure and returns a number (float) value.
+ * E.g. ½ is replaced with 0.5.
+ * Removes measurements "wenig" and replace it with 0.
+ *
+ * @param measure measure to be freed form fractions
+ */
+function convertToFloatValue(measure: string): number {
 
+    if (measure === 'wenig')
+        return 0;
+
+    let replacedMeasure = measure;
+
+    // replaces fractions (the HTML special character fractions) to its corresponding decimal number
+    const replaceStrings = [["½", ".5"], ["¼", ".25"], ["¾", ".75"], ["⅐", ".143"], ["⅑", ".111"], ["⅒", ".1"], ["⅓", ".333"],
+        ["⅔", ".666"], ["⅕", "0.2"], ["⅖", ".4"], ["⅗", "0.6"], ["⅘", ".8"], ["⅙", ".167"], ["⅛", ".125"]];
+    replaceStrings.forEach(str => {
+        replacedMeasure = replacedMeasure.replace(str[0], str[1]);
+    });
+
+    // removes spaces sucht that 1 .5 becomes 1.5
+    replacedMeasure = replacedMeasure.replace(/\s/g, '');
+    return parseFloat(replacedMeasure);
+
+}
+
+/**
+ * Parses the HTML page of a fooby.ch meal and returns it as a JSON file.
+ *
+ * @param document HTML page of fooby.ch
+ *
+ */
 function parseFooby(document: any): any {
 
     // Meta Data
@@ -75,25 +109,28 @@ function parseFooby(document: any): any {
 
         // Ingredients
         const ingredientsDom = dom.querySelectorAll("div");
-        for (let j = nameElement ? 1 : 0; j < ingredientsDom.length; j++) {
-
+        for (let j = 0; j < ingredientsDom.length; j++) {
 
             let ingredient = {};
 
+            // reads out the food string. Normally after a comma follows a description (i.g. the comment)
+            const foodTest = ingredientsDom[j].querySelector("span.recipe-ingredientlist__ingredient-desc").innerHTML;
+            const foodAndComment = foodTest.split(',')
+            const food = foodAndComment[0].trim();
+            const comment = foodAndComment.length > 1 ? foodAndComment[1].trim() : '';
 
-            const food = ingredientsDom[j].querySelector("span.recipe-ingredientlist__ingredient-desc").innerHTML;
+            let measure = ingredientsDom[j].querySelector("span.recipe-ingredientlist__ingredient-quantity > span").innerHTML;
+            measure = convertToFloatValue(measure);
 
-
-            const measure = ingredientsDom[j].querySelector("span.recipe-ingredientlist__ingredient-quantity > span").innerHTML;
-
-            // Remove child
+            // Remove child (needed to read the unit)
             ingredientsDom[j].querySelector("span.recipe-ingredientlist__ingredient-quantity").removeChild(ingredientsDom[j].querySelector("span.recipe-ingredientlist__ingredient-quantity > span"))
-            const unit = ingredientsDom[j].querySelector("span.recipe-ingredientlist__ingredient-quantity").innerHTML
 
+            // read unit and remove spaces
+            let unit = ingredientsDom[j].querySelector("span.recipe-ingredientlist__ingredient-quantity").innerHTML
+            unit = unit.replace(/\s/g, '');
 
-            ingredient = {food, measure, unit};
-
-
+            // create ingredient and add it
+            ingredient = {food, measure, unit, comment};
             ingredients.push(ingredient);
 
         }
@@ -111,6 +148,12 @@ function parseFooby(document: any): any {
 
 }
 
+/**
+ * Parses the HTML page of a swissmilk.ch meal and returns it as a JSON file.
+ *
+ * @param document HTML page of swissmilk.ch
+ *
+ */
 function parseSwissmilk(document: any): any {
 
     // Meta Data
@@ -137,22 +180,20 @@ function parseSwissmilk(document: any): any {
             const ingredientElement = ingredientsDom[j];
             const foodElement = ingredientElement.querySelector("th.Ingredient--text");
 
-            let ingredient = {};
+            let food, amount = '';
 
             // new version
             if (foodElement) {
-                const food = foodElement.innerHTML;
+                food = foodElement.innerHTML;
                 const amountElement = ingredientElement.querySelector("td.Ingredient--amount");
-                const amount = amountElement ? amountElement.innerHTML : '';
-                ingredient = {food, amount};
+                amount = amountElement ? amountElement.innerHTML : '';
 
             }
             // old version
             else {
                 const parts = ingredientElement.querySelectorAll("td.Ingredient--text > span");
 
-                let food = '';
-                let amount = '';
+
                 if (parts.length > 1) {
 
                     amount = parts[0].innerHTML;
@@ -170,10 +211,36 @@ function parseSwissmilk(document: any): any {
                 else
                     continue;
 
-                ingredient = {food, amount};
 
             }
 
+            // parse amount
+            let unit = '', measure;
+            const reg = /[^a-zA-Z]*/
+            const measureAndUnit = reg.exec(amount)
+
+            // normal measure unit pair
+            if (measureAndUnit !== null) {
+                measure = convertToFloatValue(measureAndUnit[0]);
+                amount = amount.replace(reg, '');
+                unit = amount !== '' ? amount : 'Stk.';
+            }
+
+            // not "wenig", then there is only a measure
+            else if (amount !== 'wenig') {
+                measure = convertToFloatValue(amount);
+                unit = 'Stk.'; // normally a measure without a unit is in peaces
+            }
+
+            // parses food string. Normally after a comma follows a description (i.g. the comment)
+            const foodAndComment = food.split(',')
+            food = foodAndComment[0].trim();
+            const comment = foodAndComment.length > 1 ? foodAndComment[1].trim() : '';
+
+            // test for null
+            measure = measure ? measure : 0;
+
+            const ingredient = {food, unit, measure, comment};
             ingredients.push(ingredient);
 
         }
