@@ -1,5 +1,4 @@
 <html>
-
 <head>
     <style>
         td.measure {
@@ -20,6 +19,8 @@
             width: 100%;
             column-count: 2;
             display: block;
+            margin-top: 20px;
+            margin-bottom: 20px;
         }
 
         h1.page-title {
@@ -52,20 +53,14 @@
             color: gray;
         }
 
-        page.page {
-            page-break-before: always;
-            overflow: hidden;
-            display: block;
-            height: 100vh;
-        }
-
         span.disclamer {
             font-size: 8pt;
             color: gray;
             max-width: 12cm;
             display: block;
             line-height: 12pt;
-            margin-top: 20cm;
+            position: absolute;
+            bottom: 0px;
         }
 
         article.page-landscape {
@@ -80,9 +75,14 @@
 
         article.page {
             page-break-before: always;
-            overflow: hidden;
             display: block;
             font-size: 11pt;
+            position: relative;
+        }
+
+        article.fix-page-size {
+            height: 25cm;
+            overflow: hidden;
         }
 
         ul.camp-info li {
@@ -122,14 +122,13 @@
             margin: 0;
         }
 
-
         article.meal-page {
             display: grid;
             grid-template-columns: 60% 40%;
             grid-template-areas:
-                "name date"
-                "description usedAs"
-                "recipes recipes";
+          "name date"
+          "description usedAs"
+          "recipes recipes";
         }
 
         span.ingredient-measure {
@@ -155,6 +154,12 @@
         span.ingredient-food {
             display: inline-block;
             text-align: left;
+            width: 6cm;
+        }
+
+        span.ingredient-comment {
+            display: inline-block;
+            text-align: left;
             width: auto;
         }
 
@@ -166,10 +171,10 @@
             display: grid;
             grid-template-columns: 60% 40%;
             grid-template-areas:
-                "name participants"
-                "description null"
-                "ingredients ingredients"
-                "notes notes";
+          "name participants"
+          "description null"
+          "ingredients ingredients"
+          "notes notes";
             grid-row-gap: 0.5cm;
             margin: 0 0 3cm 0;
         }
@@ -202,10 +207,8 @@
         }
 
         .shoppinglist-error {
-
             color: red;
             font-size: 10pt;
-
         }
 
         table.val-week-view-table {
@@ -230,57 +233,67 @@
             float: right;
             margin: 5px 10px;
             font-size: 10px;
+            max-height: 150px;
+            overflow: hidden;
+            max-width: 64px;
         }
 
         .val-week-view-table td {
             max-height: 100px;
         }
+
+        .gary-ingredient {
+            color: lightgrey;
+        }
     </style>
 </head>
 
-
 <body>
+<article class="page fix-page-size">
+    <h1 class="document-title val-camp-name">[wird ersetzt]</h1>
+    <h1 class="document-subtitle">Handbuch Lagerküche</h1>
+    <p class="document-version val-current-date">[wird ersetzt]</p>
+</article>
 
-    <article class="page">
-        <h1 class="document-title val-camp-name">[wird ersetzt]</h1>
-        <h1 class="document-subtitle">Lagerhandbuch</h1>
-        <p class="document-version val-current-date">[wird ersetzt]</p>
-    </article>
+<article class="page fix-page-size">
+    <h1 class="page-title">[wird ersetzt]</h1>
+    <ul class="camp-info">
+        <li>
+            <b>Beschreibung: </b>
+            <span class="val-description">[wird ersetzt]</span>
+        </li>
+        <li>
+            <b>Anzahl Teilnehmende:</b>
+            <span class="val-participants">[wird ersetzt]</span> (genau
+            TN-Angaben: <span class="val-vegis">[wird ersetzt]</span> Vegetarier
+            und <span class="val-leaders">[wird ersetzt]</span> Leitende)
+        </li>
+        <li><b>Dauer:</b> <span class="val-dauer">[wird ersetzt]</span></li>
+        <li><b>Informationen zu den Tagen: </b>
+            <div class="days-notes"></div>
+        </li>
+    </ul>
 
-    <article class="page">
-        <h1 class="page-title">Allgemeines zum Lager</h1>
-        <ul class="camp-info">
+    <span class="disclamer">
+        Wir übernehmen kein Gewähr über die mit eMeal - Menüplanung erstellten Berechnungen und Lagerhandbücher.
+        Obwohl wir unsere Berechnungen regelmässig prüfen, können wir Fehler nie ganz ausschliessen.
+        eMeal - Menüplanung haftet nicht für entstandene Schäden!
+      </span>
+</article>
 
-            <li><b>Beschreibung</b> <span class="val-description">[wird ersetzt]</span></li>
-            <li><b>Anzahl Teilnehmende:</b>
-                <span class="val-participants">[wird ersetzt]</span> davon Vegetarier (<span class="val-vegis">[wird
-                    ersetzt]</span>)</li>
-            <li><b>Dauer:</b> <span class="val-dauer">[wird ersetzt]</span></li>
-        </ul>
+<!-- Cannot be fix-page-size, so allow more than 8 days in week-view -->
+<article class="page">
+    <h1 class="page-title">Wochenübersicht</h1>
+    <span class="val-week-error"></span>
 
-        <span class="disclamer">Wir übernehmen kein Gewähr über die mit eMeal - Menuplanung erstellten Berechnungen und
-            Lagerhandbücher. Obwohl wir unsere Berechnungen regelmässig prüfen, können wir Fehler nie ganz
-            ausschliessen. eMeal - Menuplanung haftet für entstandene Schäden nicht!
-        </span>
-    </article>
+    <div class="val-week-view">
+        <table class="val-week-view-table"></table>
+    </div>
+</article>
 
-    <article class="page">
-        <h1 class="page-title">Wochenübersicht</h1>
-        <span class="val-week-error"></span>
-
-        <div class="val-week-view">
-            <table class="val-week-view-table">
-
-            </table>
-        </div>
-
-    </article>
-
-    <article class="page">
-        <h1 class="page-title">Einkaufsliste</h1>
-        <table class="shopping-list"></table>
-    </article>
-
+<article class="page">
+    <h1 class="page-title">Lager-Einkaufsliste</h1>
+    <table class="shopping-list"></table>
+</article>
 </body>
-
 </html>

@@ -9,6 +9,8 @@ import {Ingredient} from '../interfaces/firestoreDatatypes';
 /*
 
 // Used for local testing
+// Run with:    export GCLOUD_PROJECT="cevizh11"
+//              tsc functions/src/exportCamp/createExportFiles.ts && node functions/src/exportCamp/createExportFiles.js
 console.log('Launch createExportFiles...')
 console.log()
 createExportFiles({campId: "hykCWTWtw7U9jhkqpSQI"})
@@ -19,7 +21,6 @@ createExportFiles({campId: "hykCWTWtw7U9jhkqpSQI"})
     });
 
 */
-
 
 /**
  *
@@ -37,15 +38,18 @@ export async function createExportFiles(requestData: { campId: string }): Promis
     // load dependecies for creating a pdf with puppeteer
     const puppeteer = require('puppeteer');
 
-    // start creating the pdf with puppeteer
-    // creating a new instance of an headless chrome browser to print the document
-    // and save it as a PDF in the cloudStorage
-    const browser = await puppeteer.launch({args: ['--no-sandbox']});
+    /*
+    *  Start creating the pdf with puppeteer creating a new instance of an headless chrome browser
+    *  to print the document and save it as a PDF in the CloudStorage.
+    *  the launch args are needed for local testing under "Windows Subsystem for Linux"...
+    */
+    const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']});
     const page = await browser.newPage();
 
-    // loads the template html from the template folder
-    // TODO: auto-upload html datei (or copy file from src to lib folder on upload...)
-    await page.goto('file://' + __dirname + '/templates/lagerhandbuch.html');
+    // Need to create path to html file
+    const path = require("path")
+    await page.goto(path.join('file://' + __dirname, '..', '..', '/res/lagerhandbuch.html'));
+
     // use print media for print css
     await page.emulateMedia("print");
 
@@ -55,7 +59,6 @@ export async function createExportFiles(requestData: { campId: string }): Promis
 
     // generates the file path out of the campId a unique token
     const filePath = generatingFileName(requestData.campId);
-
 
     // reads out the html content
     const htmlP = (projectId === 'cevizh11') ? saveAsHTML(page, filePath) : null;
@@ -75,6 +78,9 @@ export async function createExportFiles(requestData: { campId: string }): Promis
     await Promise.all([htmlP, pdfP, csvP]);
 
     const ref = (await addDocInExportCollection(requestData.campId, filePath) as FirebaseFirestore.DocumentData).data();
+
+    browser.close();
+
     return await ref;
 
 }

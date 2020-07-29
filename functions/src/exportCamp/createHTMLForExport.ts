@@ -1,20 +1,20 @@
-import { ExportedCamp, ExportedMeal } from '../interfaces/exportDatatypes';
-import { ShoppingList } from './shopping-list';
+import {ExportedCamp, ExportedMeal} from '../interfaces/exportDatatypes';
+import {ShoppingList} from './shopping-list';
 
 /**
- * 
+ *
  * Manipulates the HTML file "lagerhandbuch.html" to create a
  * HTML document for printing the lagerhandbuch.
- * 
+ *
  * This function get exicuted in a browser environment in puppeteer.
- * 
+ *
  * @param data exportedCamp Data
- * 
+ *
  */
 export const createHTML = (camp: ExportedCamp) => {
 
     /**
-     * 
+     *
      */
     const setTitlePage = function () {
 
@@ -24,12 +24,18 @@ export const createHTML = (camp: ExportedCamp) => {
 
         // sets the version on the first page
         domElm = document.querySelector('.val-current-date') as Element;
-        domElm.innerHTML = 'Version vom ' + new Date().toLocaleDateString('de-CH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Europe/Zurich' });
+        domElm.innerHTML = 'Version vom ' + new Date().toLocaleDateString('de-CH', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            timeZone: 'Europe/Zurich'
+        });
 
     };
 
     /**
-     * 
+     *
      */
     const createInfoPage = function () {
 
@@ -55,7 +61,12 @@ export const createHTML = (camp: ExportedCamp) => {
 
         for (const day of camp.days) {
 
-            innerHTMLStr += '- ' + new Date(day.day_date_as_date).toLocaleDateString('de-CH', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'Europe/Zurich' });
+            innerHTMLStr += '- ' + new Date(day.day_date_as_date).toLocaleDateString('de-CH', {
+                weekday: 'long',
+                month: 'long',
+                day: 'numeric',
+                timeZone: 'Europe/Zurich'
+            });
             innerHTMLStr += day.day_notes !== '' ? ': ' + day.day_notes : '';
             innerHTMLStr += '<br>';
 
@@ -66,8 +77,20 @@ export const createHTML = (camp: ExportedCamp) => {
 
         // set Dauer
         domElm = document.querySelector('.val-dauer') as Element;
-        domElm.innerHTML = new Date(camp.days[0].day_date_as_date).toLocaleDateString('de-CH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Europe/Zurich' }) +
-            ' bis ' + new Date(camp.days[camp.days.length - 1].day_date_as_date).toLocaleDateString('de-CH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Europe/Zurich' }) +
+        domElm.innerHTML = new Date(camp.days[0].day_date_as_date).toLocaleDateString('de-CH', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                timeZone: 'Europe/Zurich'
+            }) +
+            ' bis ' + new Date(camp.days[camp.days.length - 1].day_date_as_date).toLocaleDateString('de-CH', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                timeZone: 'Europe/Zurich'
+            }) +
             ' (' + camp.days.length + ' Tage)';
 
     }
@@ -87,7 +110,7 @@ export const createHTML = (camp: ExportedCamp) => {
     };
 
     /**
-     * 
+     *
      */
     const createWeekView = function () {
 
@@ -126,7 +149,12 @@ export const createHTML = (camp: ExportedCamp) => {
             }
 
             innerHTMLStr += '<th><p style="height: calc((100vh - 380px) / ' + (camp.days.length + 1) + ');">'
-                + new Date(day.day_date_as_date).toLocaleDateString('de-CH', { weekday: 'short', month: 'numeric', day: 'numeric', timeZone: 'Europe/Zurich' })
+                + new Date(day.day_date_as_date).toLocaleDateString('de-CH', {
+                    weekday: 'short',
+                    month: 'numeric',
+                    day: 'numeric',
+                    timeZone: 'Europe/Zurich'
+                })
                 + '<br>' + day.day_description + '</p></th></tr>';
 
         }
@@ -138,9 +166,9 @@ export const createHTML = (camp: ExportedCamp) => {
 
 
     /**
-     * 
+     *
      * Creates a ShoppingList
-     * 
+     *
      * @param domElm Element to insert ShoppingList
      * @param list ShoppingList
      */
@@ -173,9 +201,9 @@ export const createHTML = (camp: ExportedCamp) => {
 
 
                 ingredientTr.innerHTML = `
-                <td class="measure var-measure"> `+ ((ingredient.measure !== 0) ? ingredient.measure.toFixed(2) : '') + `  </td>
-                <td class="unit var-unit"> `+ ingredient.unit + `  </td>
-                <td class="food var-food"> `+ ingredient.food + `  </td>`;
+                <td class="measure var-measure"> ` + ((ingredient.measure && ingredient.measure !== 0) ? ingredient.measure.toFixed(2) : '') + `  </td>
+                <td class="unit var-unit"> ` + ingredient.unit + `  </td>
+                <td class="food var-food"> ` + ingredient.food + `  </td>`;
 
                 tbody.appendChild(ingredientTr);
             }
@@ -198,7 +226,12 @@ export const createHTML = (camp: ExportedCamp) => {
                 newPage.innerHTML = `
                 <h1 class="page-title meal-name">` + meal.meal_name + `</h1>
                 <span class="meal-description">` + meal.meal_description + `</span>
-                <span class="meal-date">` + new Date(meal.meal_data_as_date).toLocaleDateString('de-CH', { weekday: 'long', month: 'long', day: '2-digit', timeZone: 'Europe/Zurich' }) + `</span>
+                <span class="meal-date">` + new Date(meal.meal_data_as_date).toLocaleDateString('de-CH', {
+                    weekday: 'long',
+                    month: 'long',
+                    day: '2-digit',
+                    timeZone: 'Europe/Zurich'
+                }) + `</span>
                 <span class="meal-usedAs">` + meal.meal_used_as + `</span>`;
 
                 const recipesNode = document.createElement('div');
@@ -209,9 +242,9 @@ export const createHTML = (camp: ExportedCamp) => {
                     const newRecipe = document.createElement('div');
                     newRecipe.classList.add('recipe');
                     newRecipe.innerHTML = `
-                <h2 class="recipe-name">`+ recipe.recipe_name + `</h2>
-                <span class="recipe-description">`+ recipe.recipe_description + `</span>
-                <span class="recipe-vegi-info">`+ recipe.recipe_used_for + ` (` + recipe.recipe_participants + ` Personen)</span>
+                <h2 class="recipe-name">` + recipe.recipe_name + `</h2>
+                <span class="recipe-description">` + recipe.recipe_description + `</span>
+                <span class="recipe-vegi-info">` + recipe.recipe_used_for + ` (` + recipe.recipe_participants + ` Personen)</span>
                 <span class="recipe-notes">` + recipe.recipe_notes + `</span>`;
 
                     const ingredientsNode = document.createElement('div');
@@ -223,18 +256,18 @@ export const createHTML = (camp: ExportedCamp) => {
                  <span class="ingredient-measure-calc"> ` + recipe.recipe_participants + ` Per. </span>
                  <span class="ingredient-unit"></span>
                  <span class="ingredient-food">Lebensmittel</span>
-                 <span class="ingredient-comment"></span></div>`;
+                 <span class="ingredient-comment">Bemerkung</span></div>`;
 
                     for (const ingredient of recipe.ingredients) {
 
                         const newIngredient = document.createElement('div');
                         newIngredient.classList.add('ingredient');
                         newIngredient.innerHTML = `
-                    <span class="ingredient-measure">`+ (ingredient.measure * 1).toFixed(2) + `</span>
-                    <span class="ingredient-measure-calc">`+ (ingredient.measure * recipe.recipe_participants).toFixed(2) + `</span>
-                    <span class="ingredient-unit">`+ ingredient.unit + `</span>
-                    <span class="ingredient-food">`+ ingredient.food + `</span>
-                    <span class="ingredient-comment">`+ ingredient.comment + `</span>`;
+                    <span class="ingredient-measure">` + (ingredient.measure ? (ingredient.measure * 1).toFixed(2) : '') + `</span>
+                    <span class="ingredient-measure-calc">` + (ingredient.measure ? (ingredient.measure * recipe.recipe_participants).toFixed(2) : '') + `</span>
+                    <span class="ingredient-unit">` + ingredient.unit + `</span>
+                    <span class="ingredient-food">` + ingredient.food + `</span>
+                    <span class="ingredient-comment">` + ingredient.comment + `</span>`;
 
                         ingredientsNode.appendChild(newIngredient);
                     }
@@ -263,7 +296,12 @@ export const createHTML = (camp: ExportedCamp) => {
             const newPage = document.createElement('article');
             newPage.classList.add('page');
             newPage.innerHTML = `<h1 class="page-title"> Einkaufsliste `
-                + new Date(day.day_date_as_date).toLocaleDateString('de-CH', { weekday: 'long', month: 'numeric', day: 'numeric', timeZone: 'Europe/Zurich' })
+                + new Date(day.day_date_as_date).toLocaleDateString('de-CH', {
+                    weekday: 'long',
+                    month: 'numeric',
+                    day: 'numeric',
+                    timeZone: 'Europe/Zurich'
+                })
                 + `</h1>`;
 
             const shoppingListElem = document.createElement('table');
