@@ -121,6 +121,7 @@ function parseFooby(document: any): any {
 
             let measure = ingredientsDom[j].querySelector("span.recipe-ingredientlist__ingredient-quantity > span").innerHTML;
             measure = convertToFloatValue(measure);
+            measure = measure ? measure : 0;
 
             // Remove child (needed to read the unit)
             ingredientsDom[j].querySelector("span.recipe-ingredientlist__ingredient-quantity").removeChild(ingredientsDom[j].querySelector("span.recipe-ingredientlist__ingredient-quantity > span"))

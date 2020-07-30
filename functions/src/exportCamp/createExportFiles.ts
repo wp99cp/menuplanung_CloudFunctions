@@ -7,7 +7,7 @@ import {ExportedCamp} from '../interfaces/exportDatatypes';
 import {Ingredient} from '../interfaces/firestoreDatatypes';
 
 
-
+/*
 // Used for local testing
 // Run with:    export GCLOUD_PROJECT="cevizh11"
 //              tsc functions/src/exportCamp/createExportFiles.ts && node functions/src/exportCamp/createExportFiles.js
@@ -20,7 +20,7 @@ createExportFiles({campId: "hykCWTWtw7U9jhkqpSQI"})
         console.log('End createExportFiles')
     });
 
-
+*/
 
 /**
  *
