@@ -6,7 +6,7 @@ import {ResponseData} from '../CloudFunction';
 import {ExportedCamp} from '../interfaces/exportDatatypes';
 import {Ingredient} from '../interfaces/firestoreDatatypes';
 
-/*
+
 
 // Used for local testing
 // Run with:    export GCLOUD_PROJECT="cevizh11"
@@ -20,7 +20,7 @@ createExportFiles({campId: "hykCWTWtw7U9jhkqpSQI"})
         console.log('End createExportFiles')
     });
 
-*/
+
 
 /**
  *

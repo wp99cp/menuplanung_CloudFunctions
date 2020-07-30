@@ -91,7 +91,7 @@
 
         .recipes {
             grid-area: recipes;
-            margin-top: 1.5cm;
+            margin-top: 1.25cm;
         }
 
         span.meal-usedAs {
@@ -105,16 +105,18 @@
 
         span.meal-date {
             grid-area: date;
-            font-size: 16pt;
+            font-size: 12pt;
             margin-top: auto;
-            text-align: right;
             line-height: 25pt;
             color: gray;
             font-weight: bold;
+            text-align: center;
         }
 
         span.meal-description {
             grid-area: description;
+            text-align: center;
+            margin-top: 10px;
         }
 
         h1.page-title {
@@ -124,11 +126,13 @@
 
         article.meal-page {
             display: grid;
-            grid-template-columns: 60% 40%;
-            grid-template-areas:
-          "name date"
-          "description usedAs"
-          "recipes recipes";
+            grid-template-columns: 100%;
+            grid-template-areas: "name" "date" "description" "recipes";
+        }
+
+        article.meal-page h1.page-title {
+            text-align: center;
+            padding: 0 75px;
         }
 
         span.ingredient-measure {
@@ -169,20 +173,16 @@
 
         .recipe {
             display: grid;
-            grid-template-columns: 60% 40%;
-            grid-template-areas:
-          "name participants"
-          "description null"
-          "ingredients ingredients"
-          "notes notes";
-            grid-row-gap: 0.5cm;
-            margin: 0 0 3cm 0;
+            grid-template-columns: 100%;
+            grid-template-areas: "name" "description" "ingredients" "notes";
+            margin: 0 0 0.5cm 0;
         }
 
+
         h2.recipe-name {
-            grid-area: name;
-            margin-top: auto;
-            margin-bottom: 0;
+           font-size: 18px;
+            text-align: center;
+            margin: 28px 0 18px 0;
         }
 
         span.recipe-description {
@@ -197,9 +197,11 @@
 
         span.recipe-notes {
             grid-area: notes;
-            max-width: 12cm;
             line-height: 12pt;
             font-size: 11pt;
+            margin-top: 10px;
+            line-height: 20px;
+            padding: 0 20px
         }
 
         .ingredients {

@@ -256,6 +256,9 @@ async function loadRecipe(camp: ExportedCamp, recipeRef: FirebaseFirestore.Query
         ing.unit = ing.unit ? ing.unit : '';
     });
 
+    //remove tailing ":" from recipe name
+    recipe.recipe_name = recipe.recipe_name.replace(/:$/, '');
+
     return recipe;
 }
 
