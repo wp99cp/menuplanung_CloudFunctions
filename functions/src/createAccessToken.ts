@@ -113,7 +113,7 @@ export async function createAccessToken(req: express.Request, resp: express.Resp
     const access_code = req.query.code;
     console.log(access_code);
 
-    resp.set('Access-Control-Allow-Origin', '*');
+    resp.set('Access-Control-Allow-Origin', 'https://emeal.zh11.ch');
     resp.setHeader('Content-Type', 'application/json')
 
     if (!access_code) {
