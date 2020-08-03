@@ -1,19 +1,21 @@
-import {auth} from '.';
-
-
 // Used for local testing
 // Execute with the following command:  export GCLOUD_PROJECT="cevizh11"
-//                                      tsc functions/src/createCustomAccessToken.ts && node functions/src/createCustomAccessToken.js
-// URL: https://demo.hitobito.com/oauth/authorize?response_type=code&client_id=GGCqAXRFO8_Iq-V9AdHcZwgmR-6suvIA2qsAi6LanHo&redirect_uri=https://emeal.zh11.ch&scope=email%20name
-console.log('Launch createCustomAccessToken...')
+//                                      tsc functions/src/createAccessToken.ts && node functions/src/createAccessToken.js
+// URL: https://db.cevi.ch/oauth/authorize?response_type=code&client_id=xuNev4-siwa_7NC_KacPVkqyo29gAW93WFuz2cIWn0c&redirect_uri=https://emeal.zh11.ch/login&scope=email%20name
+
+/*
+console.log('Launch createAccessToken...')
 console.log()
-createCustomAccessToken({access_code: '4QqwEvBvYB1apiagqlBENFq3S-4fpLrvjkID72AYvJw'})
+createAccessToken({access_code: 'Hla9UL7GQxZAoSkpLgcgxmZ0H5TEccSlUnBHcgghC1Q'})
     .then(res => {
         console.log(JSON.stringify(res));
         console.log();
         console.log('End importMeal')
     });
+*/
 
+import * as admin from "firebase-admin";
+import * as express from "express";
 
 /**
  *
@@ -21,7 +23,8 @@ createCustomAccessToken({access_code: '4QqwEvBvYB1apiagqlBENFq3S-4fpLrvjkID72AYv
  * @returns access_token for oauth
  *
  */
-function createAccessToken(access_code: any): Promise<string> {
+
+function createAccessToken2(access_code: any): Promise<string> {
 
     const request = require('request');
     const oauthAccessData = require('../keys/cevi-db-oauth.json');
@@ -62,6 +65,7 @@ function createAccessToken(access_code: any): Promise<string> {
  * @returns the user data
  *
  */
+
 function requestUserData(access_token: string): Promise<any> {
 
     const request = require('request');
@@ -99,44 +103,69 @@ function requestUserData(access_token: string): Promise<any> {
  *
  * It uses the uid (CeviDB) and a SHA256 function for creating a unique id for firebase.
  *
- * @param requestData with the access_code for db.cevi.ch
  *
+ * @param req
+ * @param resp
+ * @param auth
  */
-export async function createCustomAccessToken(requestData: { access_code: string }): Promise<any> {
+export async function createAccessToken(req: express.Request, resp: express.Response, auth: admin.auth.Auth): Promise<void> {
+
+    const access_code = req.query.code;
+    console.log(access_code);
+
+    resp.set('Access-Control-Allow-Origin', '*');
+    resp.setHeader('Content-Type', 'application/json')
+
+    if (!access_code) {
+        resp.status(401).send(JSON.stringify({error: 'Invalid Parameters!'}))
+        return;
+    }
 
     const crypto = require('crypto-js');
 
-    const access_token = await createAccessToken(requestData.access_code);
-    if (!access_token)
+    const access_token = await createAccessToken2(access_code);
+    if (!access_token) {
+        resp.status(401).send(JSON.stringify({error: 'Creating Access token failed! Invalid access_token.'}))
         throw new Error('Creating Access token failed! Invalid access_token.')
+    }
+
 
     const user_data: any = await requestUserData(access_token);
-    if (!user_data)
+    if (!user_data) {
+        resp.status(401).send(JSON.stringify({error: 'Creating Access token failed! Invalid user_data.'}))
         throw new Error('Creating Access token failed! Invalid user_data.')
+    }
 
     const cevi_uid = user_data.id;
     const uid = 'CeviDB-' + crypto.SHA256(cevi_uid).toString().substring(0, 18) + '-' + cevi_uid;
     console.log(uid);
 
     // user exist
-    return new Promise(res =>
+    return new Promise(returnPromise =>
         auth.getUser(uid)
-            .then(() => {
-                res(auth.createCustomToken(uid));
-
+            .then(async () => {
+                resp.send(JSON.stringify({data: await auth.createCustomToken(uid)}))
+                returnPromise();
             }).catch(() => {
 
             const userData = {
                 uid,
-                displayName: user_data.first_name + ' ' + user_data.last_name + (user_data.nickname !== '') ? (' v/o ' + user_data.nickname) : '',
+                displayName: user_data.first_name + ' ' + user_data.last_name + ((user_data.nickname !== '') ? (' v/o ' + user_data.nickname) : ''),
                 email: user_data.email
             };
 
             auth.createUser(userData)
-                .then(async (userRecord) =>
-                    res(await auth.createCustomToken(userRecord.uid)))
-                .catch(console.log)
+                .then(async (userRecord: { uid: any; }) => {
+                    resp.setHeader('Content-Type', 'application/json')
+                    resp.send(JSON.stringify({data: await auth.createCustomToken(userRecord.uid)}))
+                    returnPromise();
+                })
+
+                .catch((err) => {
+                    resp.status(401).send(JSON.stringify({error: err}))
+                });
 
         }));
+
 
 }

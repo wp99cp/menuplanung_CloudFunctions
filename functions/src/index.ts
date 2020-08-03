@@ -1,5 +1,6 @@
 import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
+import * as express from "express";
 
 import {cloudFunction, createCallableCloudFunc} from './CloudFunction';
 import {createExportFiles} from './exportCamp/createExportFiles';
@@ -7,7 +8,7 @@ import {onDeleteCamp} from './onDeleteCamp';
 import {onUserCreation} from './onUserCreation';
 import {onDeleteSpecificMeal} from './onDeleteSpecificMeal';
 import {importMeal} from "./importMeal";
-import {createCustomAccessToken} from "./createCustomAccessToken";
+import {createAccessToken} from "./createAccessToken";
 
 const client = new admin.firestore.v1.FirestoreAdminClient();
 
@@ -23,7 +24,6 @@ admin.initializeApp({
 });
 
 export const db = admin.firestore();
-export const auth = admin.auth();
 
 
 ////////////////////////////////////
@@ -33,12 +33,8 @@ export const auth = admin.auth();
 ////////////////////////////////////
 
 exports.newUserCreated = cloudFunction().auth.user().onCreate(onUserCreation());
-
 exports.importMeal = createCallableCloudFunc(importMeal, "1GB");
-
-exports.importMeal = createCallableCloudFunc(createCustomAccessToken);
-
-
+exports.createAccessToken = cloudFunction().https.onRequest((req: express.Request, resp: express.Response) => createAccessToken(req, resp, admin.auth()));
 exports.createPDF = createCallableCloudFunc(createExportFiles, "2GB");
 exports.deleteCamp = cloudFunction().firestore.document('camps/{campId}').onDelete(onDeleteCamp);
 

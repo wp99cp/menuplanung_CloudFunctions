@@ -1,11 +1,14 @@
 import * as functions from 'firebase-functions';
+import * as admin from "firebase-admin";
 
 type CloudFunction = (requestData: any) => Promise<ResponseData>;
+type CloudFunctionWithAuth = (requestData: any, auth: admin.auth.Auth) => Promise<ResponseData>;
+
 type FunctionMemory = "256MB" | "128MB" | "512MB" | "1GB" | "2GB" | undefined;
 
 /**
  * ResponseData type for httpsCallable functions
- * 
+ *
  */
 export interface ResponseData {
     data: any;
@@ -21,19 +24,32 @@ export interface ResponseData {
  *
  * @param fkt
  *
+ * @param memory
+ * @param auth
  */
 export const createCallableCloudFunc = (fkt: CloudFunction, memory?: FunctionMemory) => {
     return cloudFunction(memory)
         // creat a httpsCallable function
         .https.onCall((requestData, context) => {
             // create the response and return it to the client
-            return fkt(requestData);
+                return fkt(requestData);
         });
 };
 
+export const createCallableCloudFuncWithAuth = (fkt: CloudFunctionWithAuth, auth: admin.auth.Auth, memory?: FunctionMemory) => {
+    return cloudFunction(memory)
+        // creat a httpsCallable function
+        .https.onCall((requestData, context) => {
+            // create the response and return it to the client
+            return fkt(requestData, auth);
+        });
+};
+
+
+
 /**
- * 
- * @param memory 
+ *
+ * @param memory
  */
 export const cloudFunction = (memory: FunctionMemory = '256MB') => {
 
