@@ -137,7 +137,8 @@ export async function createAccessToken(req: express.Request, resp: express.Resp
     }
 
     const cevi_uid = user_data.id;
-    const uid = 'CeviDB-' + crypto.SHA256(cevi_uid).toString().substring(0, 18) + '-' + cevi_uid;
+    // cevi_uid.toString() the toString() is necessary since otherwise the Hash-Fkt. returns the same value for all numbers
+    const uid = 'CeviDB-' + crypto.SHA256(cevi_uid.toString()).toString().substring(0, 18) + '-' + cevi_uid;
     console.log(uid);
 
     // user exist
