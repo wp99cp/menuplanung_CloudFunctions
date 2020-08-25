@@ -84,7 +84,7 @@ service cloud.firestore {
         }
 
         // every auth user can create camps on which he has access
-        allow create: if isAuth() && (request.resource.data.access == resource.data.access) && validChanges();
+        allow create: if isAuth() && validChanges();
         allow update: if canWrite() && (request.resource.data.access == resource.data.access) && validChanges();
         allow list, get: if hasAccess();
         allow delete: if isOwner(resource.data);
