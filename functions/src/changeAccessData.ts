@@ -25,11 +25,11 @@ export interface AccessChange {
  *
  * @param requestData
  */
-export async function changeAccessData(requestedChanges: AccessChange, context: functions.https.CallableContext): Promise<any> {
+export function changeAccessData(requestedChanges: AccessChange, context: functions.https.CallableContext): Promise<any> {
 
     const documentRef = db.doc(requestedChanges.documentPath);
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
 
         db.runTransaction(async (transaction) => {
 
@@ -65,8 +65,8 @@ export async function changeAccessData(requestedChanges: AccessChange, context: 
             }
 
         })
-            .then(() => resolve('AccessData successfully updated.'))
-            .catch((error) => reject(error.message));
+            .then(() => resolve({message: 'AccessData successfully updated.'}))
+            .catch(err => resolve({error: err.message}));
 
 
     });
@@ -105,8 +105,16 @@ function isValidChange(
 
     // the owner of the document can't be changed, you can't add a second owner
     if (requestedAccessData[uid] !== 'owner' ||
-        Object.values(requestedAccessData).filter(v => v === 'owner').length != 1)
+        Object.values(requestedAccessData).filter(v => v === 'owner').length !== 1)
         throw new Error('The owner of the document can\'t be changed!');
+
+
+    /*
+     * TODO: Check if a user is removed or decreased
+     * This is only supported if the document has no "parent" relationship with other documents
+     * e.g. you can't remove a user of a recipe if this recipe is used in a meal on which the user has access
+     *
+     */
 
     return true;
 
