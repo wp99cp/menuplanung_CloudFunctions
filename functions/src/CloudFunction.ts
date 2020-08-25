@@ -1,7 +1,7 @@
 import * as functions from 'firebase-functions';
 import * as admin from "firebase-admin";
 
-type CloudFunction = (requestData: any) => Promise<ResponseData>;
+type CloudFunction = (requestData: any, context: functions.https.CallableContext) => Promise<ResponseData>;
 type CloudFunctionWithAuth = (requestData: any, auth: admin.auth.Auth) => Promise<ResponseData>;
 
 type FunctionMemory = "256MB" | "128MB" | "512MB" | "1GB" | "2GB" | undefined;
@@ -32,7 +32,7 @@ export const createCallableCloudFunc = (fkt: CloudFunction, memory?: FunctionMem
         // creat a httpsCallable function
         .https.onCall((requestData, context) => {
             // create the response and return it to the client
-                return fkt(requestData);
+            return fkt(requestData, context);
         });
 };
 
@@ -44,7 +44,6 @@ export const createCallableCloudFuncWithAuth = (fkt: CloudFunctionWithAuth, auth
             return fkt(requestData, auth);
         });
 };
-
 
 
 /**
