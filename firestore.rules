@@ -1,7 +1,5 @@
 rules_version = '2';
 
-// NEW Version
-
 // Security rules for eMeal Firebase Firestore Database
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -12,11 +10,12 @@ service cloud.firestore {
     }
 
     // check's if the user has access to this document
+    // this function did not check the access level
     function hasAccess() {
         return resource.data.access[request.auth.uid] in ['editor', 'owner', 'collaborator' , 'viewer'];
     }
 
-    // check's if the user has access to this document
+    // check's if the user has access to write to this document
     function canWrite() {
         return resource.data.access[request.auth.uid] in ['editor', 'owner', 'collaborator'];
     }
@@ -26,31 +25,6 @@ service cloud.firestore {
         return data.access[request.auth.uid] == 'owner';
     }
 
-    // check's if the user has a certain rule
-    function hasRule(data, rule) {
-        return data.access[request.auth.uid] == rule;
-    }
-
-    // checks if the access property got changed and whether he is allowed to do this
-    function checkAccessChanges(){
-
-        // TODO: Berechtigungen sind heikel, daher soll diese Funktion in Zukunft
-        // in einer Cloud-Function geregelt werden. Der Client darf und soll nichts
-        // mehr an der Berechtigungen verändern dürfen.
-
-        return
-            // nothing changed in access data
-            request.resource.data.access == resource.data.access ||
-
-            // only owners and editors can change access data
-            ((hasRule(resource.data, 'editor') || hasRule(resource.data, 'owner'))
-            // after the change at least one owner must exist in the access data field
-             && 'owner' in request.resource.data.access.values());
-
-
-    }
-
-
     // user collecion
     match /users/{userID} {
 
@@ -58,11 +32,18 @@ service cloud.firestore {
         function validChanges(){
 
             return
+
+                // access data did not change
+                request.resource.data.access == resource.data.access &&
+
                 request.resource.data.displayName is string &&
+                
                 // can't change it's email
                 request.resource.data.email == resource.data.email &&
+               
                 // can't change it's own uid
                 request.resource.data.visibility in ['visible', 'hidden'] &&
+                
                 // only this 3 fields are allowed
                 request.resource.data.keys().hasAll(['displayName', 'email', 'visibility']);
 
@@ -86,7 +67,7 @@ service cloud.firestore {
     }
 
 
-    // camps colelction
+    // camps collection
     match /camps/{campID} {
 
         function validChanges(){
@@ -103,12 +84,12 @@ service cloud.firestore {
         }
 
         // every auth user can create camps on which he has access
-        allow create: if isAuth() && isOwner(request.resource.data) && validChanges();
-
-        allow update: if canWrite() && checkAccessChanges() && validChanges();
+        allow create: if isAuth() && (request.resource.data.access == resource.data.access) && validChanges();
+        allow update: if canWrite() && (request.resource.data.access == resource.data.access) && validChanges();
         allow list, get: if hasAccess();
         allow delete: if isOwner(resource.data);
 
+        // has currently no access field
         match /exports/{docID} {
 
             allow read, list;
@@ -119,7 +100,6 @@ service cloud.firestore {
     }
 
 
-
     // group query for delete specificRecipes
     match /{path=**}/specificRecipes/{specificRecipeId} {
 
@@ -127,7 +107,6 @@ service cloud.firestore {
         allow read, list;
 
     }
-
 
     // group query for delete specificRecipes
     match /{path=**}/specificMeals/{specificMealId} {
@@ -150,10 +129,8 @@ service cloud.firestore {
 
         allow create: if isAuth() && isOwner(request.resource.data) && validChanges();
         allow list, get: if hasAccess();
-        allow update: if canWrite() && checkAccessChanges() && validChanges();
+        allow update: if canWrite() && (request.resource.data.access == resource.data.access) && validChanges();
         allow delete: if isOwner(resource.data);
-
-
 
         // specific Meals
         match /specificMeals/{specificMealID} {
@@ -161,6 +138,55 @@ service cloud.firestore {
              function validChanges(){
 
                return true;
+
+            }
+
+            allow create:  if isAuth() && validChanges();
+            allow get, list;
+            allow update: if  canWrite() && validChanges() && (request.resource.data.access == resource.data.access);
+            allow delete: if isOwner(resource.data);
+
+        }
+
+    }
+
+    // recipes
+    match /recipes/{recipeID} {
+
+        function validChanges(){
+
+            return true;
+
+        }
+
+        allow create: if isAuth() && isOwner(request.resource.data) && validChanges();
+        allow list, get: if hasAccess();
+        allow update: if canWrite() && (request.resource.data.access == resource.data.access) && validChanges();
+        allow delete: if isOwner(resource.data);
+
+
+		// overwrites
+        match /overwrites/{id} {
+
+            function validChanges(){
+
+                return true;
+
+            }
+
+            allow create:  if isAuth() && validChanges();
+            allow get, list: if hasAccess();
+            allow update: if  canWrite() && validChanges();
+            allow delete: if isOwner(resource.data);
+
+        }
+
+        // specific recipes
+        match /specificRecipes/{specificRecipeID} {
+
+            function validChanges(){
+
+                return true;
 
             }
 
@@ -172,59 +198,8 @@ service cloud.firestore {
 
         }
 
+
     }
-
-    // recipes
-        match /recipes/{recipeID} {
-
-            function validChanges(){
-
-                return true;
-
-            }
-
-            allow create: if isAuth() && isOwner(request.resource.data) && validChanges();
-            allow list, get: if hasAccess();
-            allow update: if canWrite() && checkAccessChanges() && validChanges();
-            allow delete: if isOwner(resource.data);
-
-
-						// overwrites
-             match /overwrites/{id} {
-
-                function validChanges(){
-
-                    return true;
-
-                }
-
-                allow create:  if isAuth() && validChanges();
-                allow get, list: if hasAccess();
-                allow update: if  canWrite() && validChanges();
-                allow delete: if isOwner(resource.data);
-
-            }
-
-            // specific recipes
-             match /specificRecipes/{specificRecipeID} {
-
-                function validChanges(){
-
-                    return true;
-
-                }
-
-                // TODO: add verification or access rules
-                allow create:  if isAuth() && validChanges();
-                allow get, list;
-                allow update: if  canWrite() && validChanges();
-                allow delete: if isOwner(resource.data);
-
-            }
-
-
-        }
-
 
  }
 

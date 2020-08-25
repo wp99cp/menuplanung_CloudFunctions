@@ -1,6 +1,7 @@
 // Used for local testing
 // Execute with the following command:  export GCLOUD_PROJECT="cevizh11"
-//                                      tsc functions/src/createAccessToken.ts && node functions/src/createAccessToken.js
+//
+
 // URL: https://db.cevi.ch/oauth/authorize?response_type=code&client_id=xuNev4-siwa_7NC_KacPVkqyo29gAW93WFuz2cIWn0c&redirect_uri=https://emeal.zh11.ch/login&scope=email%20name
 
 /*

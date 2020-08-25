@@ -9,6 +9,7 @@ import {onUserCreation} from './onUserCreation';
 import {onDeleteSpecificMeal} from './onDeleteSpecificMeal';
 import {importMeal} from "./importMeal";
 import {createAccessToken} from "./createAccessToken";
+import {changeAccessData} from "./changeAccessData";
 
 const client = new admin.firestore.v1.FirestoreAdminClient();
 
@@ -39,6 +40,7 @@ exports.createPDF = createCallableCloudFunc(createExportFiles, "2GB");
 exports.deleteCamp = cloudFunction().firestore.document('camps/{campId}').onDelete(onDeleteCamp);
 
 exports.deleteSpecificMeal = cloudFunction().firestore.document('meals/{mealId}/specificMeals/{specificID}').onDelete(onDeleteSpecificMeal);
+exports.changeAccessData = createCallableCloudFunc(changeAccessData, "1GB");
 
 // Name of the backup bucket
 const bucket_backup = projectId === 'cevizh11' ? 'gs://backup-bucket-firebase' : 'gs://backup-bucket-firebase-prod';
