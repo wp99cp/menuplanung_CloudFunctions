@@ -22,9 +22,11 @@ import * as admin from 'firebase-admin';
  */
 export interface AccessData {
 
-  [uid: string]: 'owner' | 'editor' | 'collaborator' | 'viewer';
+  [uid: string]: Rules;
 
 }
+
+export type Rules = 'owner' | 'editor' | 'collaborator' | 'viewer';
 
 /**
  * Repräsentiert ein einfaches FirebaseDocument

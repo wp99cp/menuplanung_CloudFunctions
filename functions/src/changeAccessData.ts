@@ -1,4 +1,4 @@
-import {AccessData, FirestoreDocument} from "./interfaces/firestoreDatatypes";
+import {AccessData, FirestoreDocument, FirestoreMeal, FirestoreRecipe, Rules} from "./interfaces/firestoreDatatypes";
 import {db} from "./index";
 import * as functions from 'firebase-functions';
 
@@ -36,7 +36,7 @@ export function changeAccessData(requestedChanges: AccessChange, context: functi
             const document = await transaction.get(documentRef);
 
             // check if changes are valid
-            if (!isValidChange(document, requestedChanges.requestedAccessData, context))
+            if (!await isValidChange(document, requestedChanges.requestedAccessData, context))
                 throw new Error('Invalid access change!');
 
             const access = generateNewAccessData(requestedChanges, document);
@@ -73,6 +73,7 @@ export function changeAccessData(requestedChanges: AccessChange, context: functi
 
 }
 
+
 /**
  *
  * Checks if the changes to the accessData for this document is valid.
@@ -82,8 +83,8 @@ export function changeAccessData(requestedChanges: AccessChange, context: functi
  * @param requestedAccessData requested changes to the accessData
  *
  */
-function isValidChange(
-    document: FirebaseFirestore.DocumentSnapshot<FirebaseFirestore.DocumentData>,
+async function isValidChange(
+    document: FirebaseFirestore.DocumentSnapshot,
     requestedAccessData: AccessData,
     context: functions.https.CallableContext) {
 
@@ -108,16 +109,54 @@ function isValidChange(
         Object.values(requestedAccessData).filter(v => v === 'owner').length !== 1)
         throw new Error('The owner of the document can\'t be changed!');
 
+    // Allow elevation of rules.
+    if (onlyElevations(documentData, requestedAccessData))
+        return true;
 
-    /*
-     * TODO: Check if a user is removed or decreased
-     * This is only supported if the document has no "parent" relationship with other documents
-     * e.g. you can't remove a user of a recipe if this recipe is used in a meal on which the user has access
-     *
-     */
+    // Decreasing of the rules
+    // This is only supported if the document has no "parent" relationship with other documents
+    // e.g. you can't remove a user of a recipe if this recipe is used in a meal on which the user has access
+    const collectionName = document.ref.parent.id;
+    switch (collectionName) {
+
+        // Check for recipes
+        case 'recipes':
+
+            // checks if the decreased rights are higher than the rights in all related documents
+            const usedInMeals = (documentData as FirestoreRecipe).used_in_meals;
+            await Promise.all(usedInMeals.map(async (mealId) => {
+
+                const docData = (await db.doc('meals/' + mealId).get()).data() as FirestoreMeal;
+
+                // Parent document can keep its rights
+                // i.g. the rights in the child document stays lower
+                for (const userID in docData.access) {
+                    if (!isElevation(docData.access[userID], requestedAccessData[userID]))
+                        throw new Error('Decreasing not allowed! There exist a meal with higher rights!');
+                }
+
+            }));
+
+            break;
+
+        // default not allowed
+        default:
+            throw new Error('Decreasing rights of a user on this document type is not supported!');
+
+    }
 
     return true;
 
+
+}
+
+function onlyElevations(documentData: FirestoreDocument, requestedAccessData: AccessData) {
+
+    let containsOnlyElevations = true;
+    for (const userID in documentData.access) {
+        containsOnlyElevations = containsOnlyElevations && isElevation(documentData.access[userID], requestedAccessData[userID])
+    }
+    return containsOnlyElevations;
 
 }
 
@@ -135,7 +174,7 @@ function isValidChange(
  */
 function generateNewAccessData(
     requestedChanges: AccessChange,
-    document: FirebaseFirestore.DocumentSnapshot<FirebaseFirestore.DocumentData>) {
+    document: FirebaseFirestore.DocumentSnapshot) {
 
     // TODO: implement access level elevation
     if (requestedChanges.upgradeOnly)
@@ -144,4 +183,28 @@ function generateNewAccessData(
     return requestedChanges.requestedAccessData;
 }
 
+
+/**
+ *
+ * Check if the change of the rule is an elevation.
+ * Returns true if rules are identical.
+ *
+ */
+function isElevation(oldRule: Rules, newRule: Rules) {
+
+    // identical
+    if (oldRule === newRule)
+        return true;
+
+    // check elevation
+    if (oldRule === 'viewer' && (newRule === 'collaborator' || newRule === 'editor' || newRule === 'owner'))
+        return true;
+    if (oldRule === 'collaborator' && (newRule === 'editor' || newRule === 'owner'))
+        return true;
+    if (oldRule === 'editor' && newRule === 'owner')
+        return true;
+
+    return false;
+
+}
 
