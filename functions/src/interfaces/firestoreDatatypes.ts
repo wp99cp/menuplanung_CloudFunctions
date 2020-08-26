@@ -90,6 +90,7 @@ export interface FirestoreMeal extends FirestoreDocument {
 
   meal_last_usage?: MealUsage;
   meal_keywords: string[];
+  used_in_camps: string[];
 
 }
 
