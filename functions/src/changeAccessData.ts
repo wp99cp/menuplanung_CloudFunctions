@@ -300,7 +300,7 @@ async function isValidChange(
                         upgradeOnly: true
                     }
 
-                    minimumRights = generateNewAccessData(changes, await db.doc(campId).get());
+                    minimumRights = generateNewAccessData(changes, await db.doc('camps/' + campId).get());
 
                 }));
             }
