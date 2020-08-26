@@ -305,9 +305,16 @@ async function isValidChange(
                 }));
             }
             // check if rights can be decreased
-            for (const userId in requestedAccessData) {
-                if (minimumRights[userId] !== undefined &&
-                    !isElevation(requestedAccessData[userId], minimumRights[userId])) {
+            for (const userId in minimumRights) {
+                if (
+                    // deleting not allowed since user has access to camp
+                    requestedAccessData[userId] === undefined ||
+                    // or allowed scenario (and than negated):
+                    // access to camp is lower than the rights to the meal
+                    // or user has collaborator access to the camp and at least viewer access to the meal
+                    !((minimumRights[userId] === 'collaborator' && requestedAccessData[userId] === 'viewer') ||
+                    isElevation(minimumRights[userId], requestedAccessData[userId]))) {
+
                     throw new Error('Decreasing not allowed! There exist a camp with higher rights!');
                 }
             }
