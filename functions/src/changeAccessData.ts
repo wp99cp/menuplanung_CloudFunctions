@@ -64,7 +64,7 @@ async function changeAccessDataWithTransaction(
     const document = await transaction.get(documentRef);
 
     // check if changes are valid
-    if (!await isValidChange(document, requestedChanges.requestedAccessData, context, parentId))
+    if (!await isValidChange(document, requestedChanges, context, parentId))
         throw new Error('Invalid access change!');
 
     // elevate rights...
@@ -202,7 +202,6 @@ async function elevateRelatedDocumentsRights(
         // elevate the rules of users in all related meals and specificMeals and specificRecipes
         case 'camps':
 
-
             // update all meals to read access...
             const mealRefs = await db.collection('meals')
                 .where('used_in_camps', 'array-contains', documentRef.id).get();
@@ -210,7 +209,7 @@ async function elevateRelatedDocumentsRights(
             // minimum rights for meals is viewer
             const access = JSON.parse(JSON.stringify(requestedChanges.requestedAccessData));
             for (const uid in access) {
-                access[uid] = 'viewer';
+                access[uid] = (access[uid] === 'editor' ? 'editor' : 'viewer');
             }
 
             // update meals and recipes to min viewer
@@ -287,7 +286,7 @@ async function elevateRelatedDocumentsRights(
  */
 async function isValidChange(
     document: FirebaseFirestore.DocumentSnapshot,
-    requestedAccessData: AccessData,
+    requestedAccessData: AccessChange,
     context: functions.https.CallableContext,
     parentId: string | undefined) {
 
@@ -308,12 +307,13 @@ async function isValidChange(
         throw new Error('Only the owner can change the access data!');
 
     // the owner of the document can't be changed, you can't add a second owner
-    if (requestedAccessData[uid] !== 'owner' ||
-        Object.values(requestedAccessData).filter(v => v === 'owner').length !== 1)
+    if (!requestedAccessData.upgradeOnly && (requestedAccessData.requestedAccessData[uid] !== 'owner' ||
+        Object.values(requestedAccessData.requestedAccessData).filter(v => v === 'owner').length !== 1))
+
         throw new Error('The owner of the document (' + document.ref.path + ') can\'t be changed!');
 
     // Allow elevation of rules.
-    if (containsOnlyElevations(documentData, requestedAccessData))
+    if (requestedAccessData.upgradeOnly || containsOnlyElevations(documentData, requestedAccessData.requestedAccessData))
         return true;
 
     // Check decreasing of the rules
@@ -344,12 +344,12 @@ async function isValidChange(
             for (const userId in minimumRights) {
                 if (
                     // deleting not allowed since user has access to camp
-                    requestedAccessData[userId] === undefined ||
+                    requestedAccessData.requestedAccessData[userId] === undefined ||
                     // or allowed scenario (and than negated):
                     // access to camp is lower than the rights to the meal
                     // or user has collaborator access to the camp and at least viewer access to the meal
-                    !((minimumRights[userId] === 'collaborator' && requestedAccessData[userId] === 'viewer') ||
-                        isElevation(minimumRights[userId], requestedAccessData[userId]))) {
+                    !((minimumRights[userId] === 'collaborator' && requestedAccessData.requestedAccessData[userId] === 'viewer') ||
+                        isElevation(minimumRights[userId], requestedAccessData.requestedAccessData[userId]))) {
 
                     throw new Error('Decreasing not allowed! There exist a camp with higher rights!');
                 }
@@ -371,7 +371,7 @@ async function isValidChange(
                     // Parent document can keep its rights
                     // i.g. the rights in the child document stays lower
                     for (const userID in docData.access) {
-                        if (!isElevation(docData.access[userID], requestedAccessData[userID]))
+                        if (!isElevation(docData.access[userID], requestedAccessData.requestedAccessData[userID]))
                             throw new Error('Decreasing not allowed! There exist a meal with higher rights!');
                     }
 
@@ -466,4 +466,3 @@ function isElevation(oldRule: Rules, newRule: Rules) {
     return oldRule === 'editor' && newRule === 'owner';
 
 }
-
