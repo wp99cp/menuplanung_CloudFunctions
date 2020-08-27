@@ -69,7 +69,7 @@ async function changeAccessDataWithTransaction(
 
     // elevate rights...
     const documentData = document.data() as (FirestoreDocument | undefined) as FirestoreDocument;
-    if (containsOnlyElevations(documentData, requestedChanges.requestedAccessData) || requestedChanges.upgradeOnly) {
+    if (requestedChanges.upgradeOnly || containsOnlyElevations(documentData, requestedChanges.requestedAccessData)) {
 
         // update accessData in document
         const access = generateNewAccessData(requestedChanges, document);
@@ -201,7 +201,43 @@ async function elevateRelatedDocumentsRights(
 
         // elevate the rules of users in all related meals and specificMeals and specificRecipes
         case 'camps':
-            throw new Error('Share camps not yet supported!');
+
+
+            // update all meals to read access...
+            const mealRefs = await db.collection('meals')
+                .where('used_in_camps', 'array-contains', documentRef.id).get();
+
+            // minimum rights for meals is viewer
+            const access = JSON.parse(JSON.stringify(requestedChanges.requestedAccessData));
+            for (const uid in access) {
+                access[uid] = 'viewer';
+            }
+
+            // update meals and recipes to min viewer
+            await Promise.all(mealRefs.docs.map(async (mealRef) =>
+                changeAccessDataWithTransaction(transaction, {
+                    upgradeOnly: true,
+                    documentPath: 'meals/' + mealRef.id,
+                    requestedAccessData: access
+                }, context, documentRef.id)
+            ));
+
+            // refs of specificMeals used in this camp
+            const specMealRefs = await db.collectionGroup('specificMeals')
+                .where('used_in_camp', '==', documentRef.id).get();
+            await Promise.all(specMealRefs.docs.map((mealRef) =>
+                transaction.update(mealRef.ref, {access: requestedChanges.requestedAccessData})
+            ));
+
+            // refs of specificRecipes used in this camp
+            const specRecipeRefs = await db.collectionGroup('specificRecipes')
+                .where('used_in_camp', '==', documentRef.id).get();
+            await Promise.all(specRecipeRefs.docs.map((recipeRef) =>
+                transaction.update(recipeRef.ref, {access: requestedChanges.requestedAccessData})
+            ));
+
+            break;
+
 
         // elevate the rules of users in all related recipes
         case 'meals':
@@ -274,7 +310,7 @@ async function isValidChange(
     // the owner of the document can't be changed, you can't add a second owner
     if (requestedAccessData[uid] !== 'owner' ||
         Object.values(requestedAccessData).filter(v => v === 'owner').length !== 1)
-        throw new Error('The owner of the document can\'t be changed!');
+        throw new Error('The owner of the document (' + document.ref.path + ') can\'t be changed!');
 
     // Allow elevation of rules.
     if (containsOnlyElevations(documentData, requestedAccessData))
@@ -313,7 +349,7 @@ async function isValidChange(
                     // access to camp is lower than the rights to the meal
                     // or user has collaborator access to the camp and at least viewer access to the meal
                     !((minimumRights[userId] === 'collaborator' && requestedAccessData[userId] === 'viewer') ||
-                    isElevation(minimumRights[userId], requestedAccessData[userId]))) {
+                        isElevation(minimumRights[userId], requestedAccessData[userId]))) {
 
                     throw new Error('Decreasing not allowed! There exist a camp with higher rights!');
                 }
