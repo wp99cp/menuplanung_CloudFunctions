@@ -15,6 +15,17 @@ export interface AccessChange {
 
 }
 
+/**
+ * Data needed to refresh the access rights for a camp after adding a recipe or a meal.
+ *
+ */
+export interface Refresh {
+
+    campId: string;
+    type: 'meal' | 'recipe';
+    path: string;
+
+}
 
 /**
  *
@@ -44,6 +55,52 @@ export function changeAccessData(requestedChanges: AccessChange, context: functi
 
 /**
  *
+ * Refreshes the access data of a camp and its related documents after adding a meal or a recipe to the camp.
+ *
+ * @param refreshRequest containing camp path, type of the added document and its path
+ * @param context of the cloud function call
+ *
+ */
+export function refreshAccessData(refreshRequest: Refresh, context: functions.https.CallableContext): Promise<any> {
+
+    return new Promise((resolve) => {
+
+        db.runTransaction(async (transaction) => {
+
+            // get the access data form the camp
+            const campAccessData = ((await transaction.get(db.doc('camps/' + refreshRequest.campId)))
+                .data() as FirestoreDocument).access;
+
+            // decrease owners to editors...
+            // e.g. a collaborator added a meal on which he is the owner the the owner
+            // of the camp should not take over his ownership...
+            for (const uid in campAccessData) {
+                campAccessData[uid] = campAccessData[uid] === 'owner' ? 'editor' : campAccessData[uid];
+            }
+
+            // create AccessChanges
+            const accessChanges: AccessChange = {
+                documentPath: 'camps/' + refreshRequest.campId,
+                requestedAccessData: campAccessData,
+                upgradeOnly: true
+            }
+
+            console.log('Global refresh with: ' + JSON.stringify(accessChanges));
+
+            // execute all the changes...
+            // TODO: reduce cost of this expensive call... only modify the added meal of recipe and its dependencies
+            await changeAccessDataWithTransaction(transaction, accessChanges, context, undefined, true)
+
+        })  // function create response
+            .then(() => resolve({message: 'AccessData successfully updated.'}))
+            .catch(err => resolve({error: err.message}));
+
+    });
+
+}
+
+/**
+ *
  * Performs the access change inside a transaction.
  * This function can be called iterativ with different arguments.
  *
@@ -51,20 +108,21 @@ export function changeAccessData(requestedChanges: AccessChange, context: functi
  * @param requestedChanges to the access data
  * @param context of the cloud function call
  * @param parentId optional parameter with a parent document id to exclude in some checks
- *
+ * @param onlyAccessNeeded
  */
 async function changeAccessDataWithTransaction(
     transaction: FirebaseFirestore.Transaction,
     requestedChanges: AccessChange,
     context: functions.https.CallableContext,
-    parentId?: string | undefined) {
+    parentId?: string | undefined,
+    onlyAccessNeeded?: boolean) {
 
     const documentRef = db.doc(requestedChanges.documentPath);
 
     const document = await transaction.get(documentRef);
 
     // check if changes are valid
-    if (!await isValidChange(document, requestedChanges, context, parentId))
+    if (!await isValidChange(document, requestedChanges, context, parentId, onlyAccessNeeded))
         throw new Error('Invalid access change!');
 
     // elevate rights...
@@ -206,10 +264,13 @@ async function elevateRelatedDocumentsRights(
             const mealRefs = await db.collection('meals')
                 .where('used_in_camps', 'array-contains', documentRef.id).get();
 
+            console.log('Meals: ' + mealRefs.docs.map(doc => doc.id).toString());
+
             // minimum rights for meals is viewer
+            // except for the owner of a camp he gets editor rights for all meals
             const access = JSON.parse(JSON.stringify(requestedChanges.requestedAccessData));
             for (const uid in access) {
-                access[uid] = (access[uid] === 'editor' ? 'editor' : 'viewer');
+                access[uid] = (access[uid] === 'editor' || access[uid] === 'owner'? 'editor' : 'viewer');
             }
 
             // update meals and recipes to min viewer
@@ -282,13 +343,15 @@ async function elevateRelatedDocumentsRights(
  * @param requestedAccessData requested changes to the accessData
  * @param context of the function call
  * @param parentId
+ * @param onlyAccessNeeded
  *
  */
 async function isValidChange(
     document: FirebaseFirestore.DocumentSnapshot,
     requestedAccessData: AccessChange,
     context: functions.https.CallableContext,
-    parentId: string | undefined) {
+    parentId: string | undefined,
+    onlyAccessNeeded?: boolean) {
 
     // request document content
     const documentData = document.data() as (FirestoreDocument | undefined);
@@ -303,7 +366,7 @@ async function isValidChange(
 
     // check if user has owner access on the document
     const ruleOfCurrentUser = documentData.access[uid];
-    if (ruleOfCurrentUser !== 'owner')
+    if ((ruleOfCurrentUser !== 'owner' && !onlyAccessNeeded) || documentData.access[uid] === 'viewer')
         throw new Error('Only the owner can change the access data!');
 
     // the owner of the document can't be changed, you can't add a second owner
