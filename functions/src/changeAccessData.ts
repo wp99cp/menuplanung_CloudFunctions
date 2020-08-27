@@ -43,7 +43,7 @@ export function changeAccessData(requestedChanges: AccessChange, context: functi
     return new Promise((resolve) => {
 
         db.runTransaction(async (transaction) =>
-            await changeAccessDataWithTransaction(transaction, requestedChanges, context, undefined))
+            await changeAccessDataWithTransaction(transaction, requestedChanges, context, false, undefined))
 
             // function create response
             .then(() => resolve({message: 'AccessData successfully updated.'}))
@@ -71,13 +71,6 @@ export function refreshAccessData(refreshRequest: Refresh, context: functions.ht
             const campAccessData = ((await transaction.get(db.doc('camps/' + refreshRequest.campId)))
                 .data() as FirestoreDocument).access;
 
-            // decrease owners to editors...
-            // e.g. a collaborator added a meal on which he is the owner the the owner
-            // of the camp should not take over his ownership...
-            for (const uid in campAccessData) {
-                campAccessData[uid] = campAccessData[uid] === 'owner' ? 'editor' : campAccessData[uid];
-            }
-
             // create AccessChanges
             const accessChanges: AccessChange = {
                 documentPath: 'camps/' + refreshRequest.campId,
@@ -89,7 +82,7 @@ export function refreshAccessData(refreshRequest: Refresh, context: functions.ht
 
             // execute all the changes...
             // TODO: reduce cost of this expensive call... only modify the added meal of recipe and its dependencies
-            await changeAccessDataWithTransaction(transaction, accessChanges, context, undefined, true)
+            await changeAccessDataWithTransaction(transaction, accessChanges, context, true, undefined)
 
         })  // function create response
             .then(() => resolve({message: 'AccessData successfully updated.'}))
@@ -114,8 +107,8 @@ async function changeAccessDataWithTransaction(
     transaction: FirebaseFirestore.Transaction,
     requestedChanges: AccessChange,
     context: functions.https.CallableContext,
-    parentId?: string | undefined,
-    onlyAccessNeeded?: boolean) {
+    onlyAccessNeeded: boolean,
+    parentId ?: string | undefined) {
 
     const documentRef = db.doc(requestedChanges.documentPath);
 
@@ -130,9 +123,10 @@ async function changeAccessDataWithTransaction(
     if (requestedChanges.upgradeOnly || containsOnlyElevations(documentData, requestedChanges.requestedAccessData)) {
 
         // update accessData in document
-        const access = generateNewAccessData(requestedChanges, document);
+        const access = generateNewAccessData(JSON.parse(JSON.stringify(requestedChanges)), document);
 
-        await elevateRelatedDocumentsRights(documentRef, JSON.parse(JSON.stringify(requestedChanges)), context, transaction);
+        await elevateRelatedDocumentsRights(documentRef,
+            JSON.parse(JSON.stringify(requestedChanges)), context, transaction, onlyAccessNeeded);
 
         console.log(documentRef.path + ' (1): ' + JSON.stringify(access));
         transaction.update(documentRef, {access});
@@ -142,7 +136,7 @@ async function changeAccessDataWithTransaction(
     // ... or decrease rights
     else {
 
-        await decreaseRights(documentRef, requestedChanges, transaction, context);
+        await decreaseRights(documentRef, requestedChanges, transaction, context, onlyAccessNeeded);
 
     }
 }
@@ -160,7 +154,8 @@ async function decreaseRights(
     documentRef: FirebaseFirestore.DocumentReference,
     requestedChanges: AccessChange,
     transaction: FirebaseFirestore.Transaction,
-    context: functions.https.CallableContext) {
+    context: functions.https.CallableContext,
+    onlyAccessNeeded: boolean) {
 
     const collectionName = documentRef.parent.id;
 
@@ -208,7 +203,8 @@ async function decreaseRights(
 
                 // catch exceptions, it may not be possible to decrease the rights of the recipes
                 try {
-                    await changeAccessDataWithTransaction(transaction, JSON.parse(JSON.stringify(changesToRecipe)), context, documentRef.id);
+                    await changeAccessDataWithTransaction(transaction,
+                        JSON.parse(JSON.stringify(changesToRecipe)), context, onlyAccessNeeded, documentRef.id);
                 } catch (error) {
                     console.log(error);
                 }
@@ -251,7 +247,8 @@ async function elevateRelatedDocumentsRights(
     documentRef: FirebaseFirestore.DocumentReference,
     requestedChanges: AccessChange,
     context: functions.https.CallableContext,
-    transaction: FirebaseFirestore.Transaction) {
+    transaction: FirebaseFirestore.Transaction,
+    onlyAccessNeeded: boolean) {
 
     const collectionName = documentRef.parent.id;
 
@@ -270,7 +267,7 @@ async function elevateRelatedDocumentsRights(
             // except for the owner of a camp he gets editor rights for all meals
             const access = JSON.parse(JSON.stringify(requestedChanges.requestedAccessData));
             for (const uid in access) {
-                access[uid] = (access[uid] === 'editor' || access[uid] === 'owner'? 'editor' : 'viewer');
+                access[uid] = (access[uid] === 'editor' || access[uid] === 'owner' ? 'editor' : 'viewer');
             }
 
             // update meals and recipes to min viewer
@@ -279,7 +276,7 @@ async function elevateRelatedDocumentsRights(
                     upgradeOnly: true,
                     documentPath: 'meals/' + mealRef.id,
                     requestedAccessData: access
-                }, context, documentRef.id)
+                }, context, onlyAccessNeeded, documentRef.id)
             ));
 
             // refs of specificMeals used in this camp
@@ -316,7 +313,8 @@ async function elevateRelatedDocumentsRights(
 
                 // changing the rights of a meal may not be possible
                 try {
-                    await changeAccessDataWithTransaction(transaction, JSON.parse(JSON.stringify(recipeChanges)), context, documentRef.id);
+                    await changeAccessDataWithTransaction(transaction,
+                        JSON.parse(JSON.stringify(recipeChanges)), context, onlyAccessNeeded, documentRef.id);
                 } catch (error) {
                     console.log(error);
                 }
@@ -366,7 +364,7 @@ async function isValidChange(
 
     // check if user has owner access on the document
     const ruleOfCurrentUser = documentData.access[uid];
-    if ((ruleOfCurrentUser !== 'owner' && !onlyAccessNeeded) || documentData.access[uid] === 'viewer')
+    if (ruleOfCurrentUser !== 'owner' && !onlyAccessNeeded)
         throw new Error('Only the owner can change the access data!');
 
     // the owner of the document can't be changed, you can't add a second owner
