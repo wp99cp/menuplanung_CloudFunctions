@@ -37,13 +37,13 @@ service cloud.firestore {
                 request.resource.data.access == resource.data.access &&
 
                 request.resource.data.displayName is string &&
-                
+
                 // can't change it's email
                 request.resource.data.email == resource.data.email &&
-               
+
                 // can't change it's own uid
                 request.resource.data.visibility in ['visible', 'hidden'] &&
-                
+
                 // only this 3 fields are allowed
                 request.resource.data.keys().hasAll(['displayName', 'email', 'visibility']);
 
@@ -144,7 +144,7 @@ service cloud.firestore {
             allow create:  if isAuth() && validChanges();
             allow get, list;
             allow update: if  canWrite() && validChanges() && (request.resource.data.access == resource.data.access);
-            allow delete: if isOwner(resource.data);
+            allow delete: if canWrite();
 
         }
 
@@ -194,7 +194,7 @@ service cloud.firestore {
             allow create:  if isAuth() && validChanges();
             allow get, list;
             allow update: if  canWrite() && validChanges();
-            allow delete: if isOwner(resource.data);
+            allow delete: if canWrite();
 
         }
 
