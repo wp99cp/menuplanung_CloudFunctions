@@ -111,8 +111,8 @@ async function addMinRightsForRecipe(
     const mealRefs = recipeData.used_in_meals;
     await Promise.all(mealRefs.map(async mealRef => {
 
-        // get access data
-        const mealAccessRights = ((await transaction.get(db.doc('meals/' + mealRef)))
+        // get access data --> TODO: use transaction
+        const mealAccessRights = ((await db.doc('meals/' + mealRef).get())
             .data() as FirestoreDocument).access;
 
         for (const uid in mealAccessRights) {
@@ -165,6 +165,7 @@ async function changeAccessDataWithTransaction(
         // if it's a recipe check for min. access
         if (documentRef.parent.id === 'recipes')
             await addMinRightsForRecipe(document, transaction, access);
+
 
         console.log(documentRef.path + ' (1): ' + JSON.stringify(access));
         transaction.update(documentRef, {access});
