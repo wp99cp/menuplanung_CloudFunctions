@@ -130,7 +130,7 @@ service cloud.firestore {
         allow create: if isAuth() && isOwner(request.resource.data) && validChanges();
         allow list, get: if hasAccess();
         allow update: if canWrite() && (request.resource.data.access == resource.data.access) && validChanges();
-        allow delete: if isOwner(resource.data);
+        allow delete: if isOwner(resource.data); // TODO: if never used
 
         // specific Meals
         match /specificMeals/{specificMealID} {
@@ -162,7 +162,7 @@ service cloud.firestore {
         allow create: if isAuth() && isOwner(request.resource.data) && validChanges();
         allow list, get: if hasAccess();
         allow update: if canWrite() && (request.resource.data.access == resource.data.access) && validChanges();
-        allow delete: if isOwner(resource.data);
+        allow delete: if isOwner(resource.data); // TODO: if never used....
 
 
 		// overwrites
@@ -177,7 +177,7 @@ service cloud.firestore {
             allow create:  if isAuth() && validChanges();
             allow get, list: if hasAccess();
             allow update: if  canWrite() && validChanges();
-            allow delete: if isOwner(resource.data);
+            allow delete: if  canWrite();
 
         }
 
