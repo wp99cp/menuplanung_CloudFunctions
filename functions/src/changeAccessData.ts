@@ -404,7 +404,7 @@ async function isValidChange(
     // check if user has owner access on the document
     const ruleOfCurrentUser = documentData.access[uid];
     if (ruleOfCurrentUser !== 'owner' && !onlyAccessNeeded)
-        throw new Error('Only the owner can change the access data!' + ruleOfCurrentUser + '  ' + onlyAccessNeeded + '  ' + document.ref.path);
+        throw new Error('Only the owner can change the access data!');
 
     // the owner of the document can't be changed, you can't add a second owner
     if (!requestedAccessData.upgradeOnly && (requestedAccessData.requestedAccessData[uid] !== 'owner' ||
