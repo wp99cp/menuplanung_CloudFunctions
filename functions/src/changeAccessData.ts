@@ -322,16 +322,15 @@ async function elevateRelatedDocumentsRights(
             const specMealRefs = await db.collectionGroup('specificMeals')
                 .where('used_in_camp', '==', documentRef.id).get();
             await Promise.all(specMealRefs.docs.map((mealRef) =>
-                transaction.update(mealRef.ref, {access: requestedChanges.requestedAccessData})
+                mealRef.ref.update({access: requestedChanges.requestedAccessData})
             ));
 
             // refs of specificRecipes used in this camp
             const specRecipeRefs = await db.collectionGroup('specificRecipes')
                 .where('used_in_camp', '==', documentRef.id).get();
             await Promise.all(specRecipeRefs.docs.map((recipeRef) =>
-                transaction.update(recipeRef.ref, {access: requestedChanges.requestedAccessData})
+                recipeRef.ref.update({access: requestedChanges.requestedAccessData})
             ));
-
 
             break;
 
