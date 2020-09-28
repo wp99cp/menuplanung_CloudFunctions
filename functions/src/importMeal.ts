@@ -86,9 +86,12 @@ function convertToFloatValue(measure: string): number {
 function parseFooby(document: any): any {
 
     // Meta Data
-    const duration = document.querySelector("#page-header-recipe__panel-detail > div.page-header-recipe__meta-container > div:nth-child(1) > span:nth-child(2)").innerHTML;
+    let duration = document.querySelector("#page-header-recipe__panel-detail > div.page-header-recipe__meta-container > div:nth-child(1) > span:nth-child(2)");
     const mealTitle = document.querySelector("#page-header-recipe__panel-detail > h1").innerHTML;
     const participants = document.querySelector("#portionValueSpan").innerHTML;
+
+    // extract duration if exist
+    duration = duration ? duration.innerHTML : "";
 
     // Recipes
     const recipesDom = document.querySelectorAll("body > div.t5-recipe > div.container.container--horizontal-padding-medium > div:nth-child(1) > div.col-xs-12.col-sm-4.col-md-4.h-horizontal-guttered.t5-recipe__detail-left > div.portion-calculator > div.recipe-ingredientlist > div.recipe-ingredientlist__step-wrapper");
@@ -130,6 +133,9 @@ function parseFooby(document: any): any {
             let unit = ingredientsDom[j].querySelector("span.recipe-ingredientlist__ingredient-quantity").innerHTML
             unit = unit.replace(/\s/g, '');
 
+            // reduce to 1 participants
+            measure /= participants;
+
             // create ingredient and add it
             ingredient = {food, measure, unit, comment};
             ingredients.push(ingredient);
@@ -158,9 +164,12 @@ function parseFooby(document: any): any {
 function parseSwissmilk(document: any): any {
 
     // Meta Data
-    const duration = document.querySelector("#main > div.RecipeDetail > section > header > div.DetailPageHeader--body > div > div.DetailPageHeader--header > ul > li.RecipeFacts--fact.duration > span").innerHTML;
+    let duration = document.querySelector("#main > div.RecipeDetail > section > header > div.DetailPageHeader--body > div > div.DetailPageHeader--header > ul > li.RecipeFacts--fact.duration > span");
     const mealTitle = document.querySelector("#main > div.RecipeDetail > section > header > div.DetailPageHeader--body > div > div.DetailPageHeader--header > h1").innerHTML;
     const participants = document.querySelector("#main > div.RecipeDetail > section > div.SplitView > div > div.SplitView--left > div > section > header > div > p > span > span").innerHTML;
+
+    // extract duration if exist
+    duration = duration ? duration.innerHTML : "";
 
     // Recipes
     const recipesDom = document.querySelectorAll("#main > div.RecipeDetail > section > div.SplitView > div > div.SplitView--left > div > section > table > tbody");
@@ -238,8 +247,8 @@ function parseSwissmilk(document: any): any {
             food = foodAndComment[0].trim();
             const comment = foodAndComment.length > 1 ? foodAndComment[1].trim() : '';
 
-            // test for null
-            measure = measure ? measure : 0;
+            // test for null and calc for 1 person
+            measure = measure ? measure / participants : 0;
 
             const ingredient = {food, unit, measure, comment};
             ingredients.push(ingredient);
