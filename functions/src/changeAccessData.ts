@@ -166,7 +166,7 @@ async function changeAccessDataWithTransaction(
         if (documentRef.parent.id === 'recipes')
             await addMinRightsForRecipe(document, transaction, access);
 
-
+        // TODO: possible problem with transaction...
         console.log(documentRef.path + ' (1): ' + JSON.stringify(access));
         transaction.update(documentRef, {access});
 
@@ -249,6 +249,7 @@ async function decreaseRights(
 
             }));
 
+            // TODO: possible problem with transaction...
             // update accessData in document
             console.log(documentRef.path + '(2): ' + JSON.stringify(requestedChanges.requestedAccessData));
             transaction.update(documentRef, {access: requestedChanges.requestedAccessData});
@@ -257,6 +258,7 @@ async function decreaseRights(
 
         case 'recipes':
 
+            // TODO: possible problem with transaction...
             // update accessData in document
             console.log(documentRef.path + '(3): ' + JSON.stringify(requestedChanges.requestedAccessData));
             transaction.update(documentRef, {access: requestedChanges.requestedAccessData});
