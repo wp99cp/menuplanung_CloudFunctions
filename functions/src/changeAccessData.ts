@@ -168,7 +168,7 @@ async function changeAccessDataWithTransaction(
 
 
         console.log(documentRef.path + ' (1): ' + JSON.stringify(access));
-        transaction.update(documentRef, {access});
+        await documentRef.update({access});
 
     }
 
@@ -251,7 +251,7 @@ async function decreaseRights(
 
             // update accessData in document
             console.log(documentRef.path + '(2): ' + JSON.stringify(requestedChanges.requestedAccessData));
-            transaction.update(documentRef, {access: requestedChanges.requestedAccessData});
+            await documentRef.update({access: requestedChanges.requestedAccessData});
 
             break;
 
@@ -259,7 +259,7 @@ async function decreaseRights(
 
             // update accessData in document
             console.log(documentRef.path + '(3): ' + JSON.stringify(requestedChanges.requestedAccessData));
-            transaction.update(documentRef, {access: requestedChanges.requestedAccessData});
+            await documentRef.update( {access: requestedChanges.requestedAccessData});
 
             break;
 
