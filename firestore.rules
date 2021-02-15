@@ -12,7 +12,8 @@ service cloud.firestore {
     // check's if the user has access to this document
     // this function did not check the access level
     function hasAccess() {
-        return resource.data.access[request.auth.uid] in ['editor', 'owner', 'collaborator' , 'viewer'];
+        return resource.data.access[request.auth.uid] in ['editor', 'owner', 'collaborator' , 'viewer'] ||
+        resource.data.access['all_users'] in ['viewer'];
     }
 
     // check's if the user has access to write to this document
@@ -58,11 +59,25 @@ service cloud.firestore {
 
     }
 
+    // user collecion
+    match /users/{userID}/private/{document=**} {
+
+    	allow read, write: if request.auth.uid == userID
+
+    }
+
 
     // shared data can be read but not write to it
     match /sharedData/{document=**} {
 
         allow read, list: if isAuth();
+
+    }
+
+    // Help messages can be read by all users
+    match /sharedData/helpMessages/messages/{document=**} {
+
+        allow read, list;
 
     }
 
