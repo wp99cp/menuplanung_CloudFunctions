@@ -1,6 +1,7 @@
 import {AccessData, FirestoreDocument, FirestoreMeal, FirestoreRecipe, Rules} from "./interfaces/firestoreDatatypes";
 import {db} from "./index";
 import * as functions from 'firebase-functions';
+import {ResponseData} from "./CloudFunction";
 
 /**
  *  Data needed to request a access change of a document.
@@ -38,18 +39,12 @@ export interface Refresh {
  * @param requestedChanges to the accessData
  * @param context of the function call
  */
-export function changeAccessData(requestedChanges: AccessChange, context: functions.https.CallableContext): Promise<any> {
+export function changeAccessData(requestedChanges: AccessChange, context: functions.https.CallableContext): Promise<ResponseData> {
 
-    return new Promise((resolve) => {
-
-        db.runTransaction(async (transaction) =>
-            await changeAccessDataWithTransaction(transaction, requestedChanges, context, false, undefined))
-
-            // function create response
-            .then(() => resolve({message: 'AccessData successfully updated.'}))
-            .catch(err => resolve({error: err.message}));
-
-    });
+    return new Promise(async res => {
+        await changeAccessDataWithTransaction(requestedChanges, context, false, undefined);
+        return {};
+    })
 
 }
 
@@ -81,7 +76,7 @@ export function refreshAccessData(refreshRequest: Refresh, context: functions.ht
             }
 
             // execute all the changes...
-            await changeAccessDataWithTransaction(transaction, accessChanges, context, true, undefined)
+            await changeAccessDataWithTransaction(accessChanges, context, true, undefined)
 
         })  // function create response
             .then(() => resolve({message: 'AccessData successfully updated.'}))
@@ -97,13 +92,11 @@ export function refreshAccessData(refreshRequest: Refresh, context: functions.ht
  * i.g. add inherited rights form meals which use this recipe.
  *
  * @param document snapshot of the recipe
- * @param transaction current transaction to request data
  * @param access current access data to be modified
  *
  */
 async function addMinRightsForRecipe(
     document: FirebaseFirestore.DocumentSnapshot,
-    transaction: FirebaseFirestore.Transaction,
     access: AccessData) {
 
     const recipeData = (document.data() as FirestoreRecipe);
@@ -111,7 +104,7 @@ async function addMinRightsForRecipe(
     const mealRefs = recipeData.used_in_meals;
     await Promise.all(mealRefs.map(async mealRef => {
 
-        // get access data --> TODO: use transaction
+        // get access data
         const mealAccessRights = ((await db.doc('meals/' + mealRef).get())
             .data() as FirestoreDocument).access;
 
@@ -131,14 +124,12 @@ async function addMinRightsForRecipe(
  * Performs the access change inside a transaction.
  * This function can be called iterativ with different arguments.
  *
- * @param transaction: the current transaction to perform all read and writes in it.
  * @param requestedChanges to the access data
  * @param context of the cloud function call
  * @param parentId optional parameter with a parent document id to exclude in some checks
  * @param onlyAccessNeeded
  */
 async function changeAccessDataWithTransaction(
-    transaction: FirebaseFirestore.Transaction,
     requestedChanges: AccessChange,
     context: functions.https.CallableContext,
     onlyAccessNeeded: boolean,
@@ -146,7 +137,7 @@ async function changeAccessDataWithTransaction(
 
     const documentRef = db.doc(requestedChanges.documentPath);
 
-    const document = await transaction.get(documentRef);
+    const document = await documentRef.get();
 
     // check if changes are valid
     if (!await isValidChange(document, requestedChanges, context, parentId, onlyAccessNeeded))
@@ -160,21 +151,21 @@ async function changeAccessDataWithTransaction(
         const access = generateNewAccessData(JSON.parse(JSON.stringify(requestedChanges)), document);
 
         await elevateRelatedDocumentsRights(documentRef,
-            JSON.parse(JSON.stringify(requestedChanges)), context, transaction, onlyAccessNeeded);
+            JSON.parse(JSON.stringify(requestedChanges)), context, onlyAccessNeeded);
 
         // if it's a recipe check for min. access
         if (documentRef.parent.id === 'recipes')
-            await addMinRightsForRecipe(document, transaction, access);
+            await addMinRightsForRecipe(document, access);
 
-
+        // TODO: possible problem with transaction...
         console.log(documentRef.path + ' (1): ' + JSON.stringify(access));
-        transaction.update(documentRef, {access});
+        await documentRef.update({access});
 
     }
 
     // ... or decrease rights
     else {
-        await decreaseRights(documentRef, requestedChanges, transaction, context, onlyAccessNeeded);
+        await decreaseRights(documentRef, requestedChanges, context, onlyAccessNeeded);
     }
 }
 
@@ -183,7 +174,6 @@ async function changeAccessDataWithTransaction(
  *
  * @param documentRef to the document
  * @param requestedChanges to the access data
- * @param transaction: the current transaction to perform writes in
  * @param context of the cloud function call
  * @param onlyAccessNeeded
  *
@@ -191,7 +181,6 @@ async function changeAccessDataWithTransaction(
 async function decreaseRights(
     documentRef: FirebaseFirestore.DocumentReference,
     requestedChanges: AccessChange,
-    transaction: FirebaseFirestore.Transaction,
     context: functions.https.CallableContext,
     onlyAccessNeeded: boolean) {
 
@@ -221,7 +210,7 @@ async function decreaseRights(
                             requestedAccessData: minimumRights,
                             upgradeOnly: true
                         }
-                        const meal = await transaction.get(db.doc('meals/' + mealId));
+                        const meal = await db.doc('meals/' + mealId).get();
                         minimumRights = generateNewAccessData(changes, meal);
                     }));
 
@@ -241,7 +230,7 @@ async function decreaseRights(
 
                 // catch exceptions, it may not be possible to decrease the rights of the recipes
                 try {
-                    await changeAccessDataWithTransaction(transaction,
+                    await changeAccessDataWithTransaction(
                         JSON.parse(JSON.stringify(changesToRecipe)), context, true, documentRef.id);
                 } catch (error) {
                     console.log(error);
@@ -249,17 +238,19 @@ async function decreaseRights(
 
             }));
 
+            // TODO: possible problem with transaction...
             // update accessData in document
             console.log(documentRef.path + '(2): ' + JSON.stringify(requestedChanges.requestedAccessData));
-            transaction.update(documentRef, {access: requestedChanges.requestedAccessData});
+            await documentRef.update({access: requestedChanges.requestedAccessData});
 
             break;
 
         case 'recipes':
 
+            // TODO: possible problem with transaction...
             // update accessData in document
             console.log(documentRef.path + '(3): ' + JSON.stringify(requestedChanges.requestedAccessData));
-            transaction.update(documentRef, {access: requestedChanges.requestedAccessData});
+            await documentRef.update({access: requestedChanges.requestedAccessData});
 
             break;
 
@@ -278,7 +269,6 @@ async function decreaseRights(
  * @param documentRef
  * @param requestedChanges
  * @param context
- * @param transaction
  * @param onlyAccessNeeded
  *
  */
@@ -286,7 +276,6 @@ async function elevateRelatedDocumentsRights(
     documentRef: FirebaseFirestore.DocumentReference,
     requestedChanges: AccessChange,
     context: functions.https.CallableContext,
-    transaction: FirebaseFirestore.Transaction,
     onlyAccessNeeded: boolean) {
 
     const collectionName = documentRef.parent.id;
@@ -311,7 +300,7 @@ async function elevateRelatedDocumentsRights(
 
             // update meals and recipes to min viewer
             await Promise.all(mealRefs.docs.map(async (mealRef) =>
-                changeAccessDataWithTransaction(transaction, {
+                changeAccessDataWithTransaction({
                     upgradeOnly: true,
                     documentPath: 'meals/' + mealRef.id,
                     requestedAccessData: access
@@ -352,7 +341,7 @@ async function elevateRelatedDocumentsRights(
 
                 // changing the rights of a meal may not be possible
                 try {
-                    await changeAccessDataWithTransaction(transaction,
+                    await changeAccessDataWithTransaction(
                         JSON.parse(JSON.stringify(recipeChanges)), context, true, documentRef.id);
                 } catch (error) {
                     console.log(error);
