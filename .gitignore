@@ -9,7 +9,7 @@ firebase-debug.log*
 # Firebase cache
 .firebase/
 
-keys
+functions/keys
 
 # Firebase config
 
@@ -65,3 +65,7 @@ node_modules/
 
 # dotenv environment variables file
 .env
+
+
+/.idea
+.idea/workspace.xml
