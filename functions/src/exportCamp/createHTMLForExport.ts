@@ -160,7 +160,7 @@ export const createHTML = (camp: ExportedCamp) => {
             }
 
             innerHTMLStr += '</table>';
-            const domElm = document.querySelector('.val-week-overview-table') as Element;
+            const domElm = document.querySelector('.val-week-view-table') as Element;
             domElm.innerHTML = innerHTMLStr;
         }
 
